@@ -3,6 +3,9 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# Ignore the docs folder
+docs/
+
 # dotenv files
 .env
 appsettings.Development.json
