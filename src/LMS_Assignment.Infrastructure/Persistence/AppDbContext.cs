@@ -1,15 +1,10 @@
 ﻿using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LMS_Assignment.Infrastructure.Persistence;
 
-public class AppDbContext: DbContext
+public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -40,5 +35,4 @@ public class AppDbContext: DbContext
 
         base.OnModelCreating(modelBuilder);
     }
-
 }
