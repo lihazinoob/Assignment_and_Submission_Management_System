@@ -10,6 +10,10 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.11" />
   </ItemGroup>
 
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0" />
+	</ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\LMS_Assignment.Application\LMS_Assignment.Application.csproj" />
     <ProjectReference Include="..\LMS_Assignment.Infrastructure\LMS_Assignment.Infrastructure.csproj" />
