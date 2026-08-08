@@ -1,3 +1,4 @@
+using LMS_Assignment.Application.Common.Interfaces;
 using LMS_Assignment.Domain.Enums;
 using LMS_Assignment.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,7 @@ public static class DependencyInjection
 
         services.AddSingleton(dataSource);
         services.AddDbContext<AppDbContext>(options => options.UseNpgsql(dataSource));
+        services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
         return services;
     }
