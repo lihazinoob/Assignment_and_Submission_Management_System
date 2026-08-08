@@ -1,3 +1,4 @@
+using LMS_Assignment.Application.Auth;
 using LMS_Assignment.Application.Submissions;
 using LMS_Assignment.Application.TeacherSubjectAssignments;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,7 @@ public static class DependencyInjection
     {
         services.AddScoped<ITeacherSubjectAssignmentService, TeacherSubjectAssignmentService>();
         services.AddScoped<ISubmissionService, SubmissionService>();
+        services.AddScoped<IAuthService, AuthService>();
 
         return services;
     }

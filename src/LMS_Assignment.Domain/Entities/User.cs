@@ -1,8 +1,9 @@
+using LMS_Assignment.Domain.Common;
 using LMS_Assignment.Domain.Enums;
 
 namespace LMS_Assignment.Domain.Entities;
 
-public class User
+public class User : IHasUpdatedAt
 {
     public Guid Id { get; set; }
     public string FullName { get; set; } = string.Empty;

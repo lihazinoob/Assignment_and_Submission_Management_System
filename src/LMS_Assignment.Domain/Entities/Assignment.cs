@@ -1,8 +1,9 @@
+using LMS_Assignment.Domain.Common;
 using LMS_Assignment.Domain.Enums;
 
 namespace LMS_Assignment.Domain.Entities;
 
-public class Assignment
+public class Assignment : IHasUpdatedAt
 {
     public Guid Id { get; set; }
     public Guid TeacherSubjectAssignmentId { get; set; }
