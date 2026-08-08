@@ -1,4 +1,5 @@
 using LMS_Assignment.Domain.Entities;
+using LMS_Assignment.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,7 +17,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.FullName).HasColumnName("full_name").HasMaxLength(150).IsRequired();
         builder.Property(u => u.Email).HasColumnName("email").HasMaxLength(255).IsRequired();
         builder.Property(u => u.PasswordHash).HasColumnName("password_hash").HasMaxLength(255).IsRequired();
-        builder.Property(u => u.Role).HasColumnName("role").IsRequired();
+        builder.Property(u => u.Role).HasColumnName("role").HasColumnType("user_role").IsRequired();
         builder.Property(u => u.IsActive).HasColumnName("is_active").HasDefaultValue(true);
         builder.Property(u => u.CreatedAt).HasColumnName("created_at");
         builder.Property(u => u.UpdatedAt).HasColumnName("updated_at");

@@ -1,6 +1,7 @@
 ﻿using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Npgsql.NameTranslation;
 
 namespace LMS_Assignment.Infrastructure.Persistence;
 
@@ -26,10 +27,10 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasPostgresEnum<UserRole>("user_role");
-        modelBuilder.HasPostgresEnum<EnrollmentStatus>("enrollment_status");
-        modelBuilder.HasPostgresEnum<AssignmentStatus>("assignment_status");
-        modelBuilder.HasPostgresEnum<SubmissionStatus>("submission_status");
+        modelBuilder.HasPostgresEnum<UserRole>(name: "user_role", nameTranslator: new NpgsqlNullNameTranslator());
+        modelBuilder.HasPostgresEnum<EnrollmentStatus>(name: "enrollment_status", nameTranslator: new NpgsqlNullNameTranslator());
+        modelBuilder.HasPostgresEnum<AssignmentStatus>(name: "assignment_status", nameTranslator: new NpgsqlNullNameTranslator());
+        modelBuilder.HasPostgresEnum<SubmissionStatus>(name: "submission_status", nameTranslator: new NpgsqlNullNameTranslator());
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 

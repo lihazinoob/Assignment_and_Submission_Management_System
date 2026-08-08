@@ -17,7 +17,7 @@ public class StudentEnrollmentConfiguration : IEntityTypeConfiguration<StudentEn
         builder.Property(e => e.StudentId).HasColumnName("student_id");
         builder.Property(e => e.ClassId).HasColumnName("class_id");
         builder.Property(e => e.RollNumber).HasColumnName("roll_number").HasMaxLength(30);
-        builder.Property(e => e.Status).HasColumnName("status").HasDefaultValue(EnrollmentStatus.Active);
+        builder.Property(e => e.Status).HasColumnName("status").HasColumnType("enrollment_status").HasDefaultValueSql("'Active'::enrollment_status");
         builder.Property(e => e.EnrolledAt).HasColumnName("enrolled_at");
 
         builder.HasIndex(e => new { e.StudentId, e.ClassId }).IsUnique();

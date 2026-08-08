@@ -20,7 +20,7 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
         builder.Property(a => a.Deadline).HasColumnName("deadline");
         builder.Property(a => a.MaxMarks).HasColumnName("max_marks").HasColumnType("numeric(6,2)");
         builder.Property(a => a.AllowResubmission).HasColumnName("allow_resubmission").HasDefaultValue(true);
-        builder.Property(a => a.Status).HasColumnName("status").HasDefaultValue(AssignmentStatus.Draft);
+        builder.Property(a => a.Status).HasColumnName("status").HasColumnType("assignment_status").HasDefaultValueSql("'Draft'::assignment_status");
         builder.Property(a => a.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         builder.Property(a => a.CreatedAt).HasColumnName("created_at");
         builder.Property(a => a.UpdatedAt).HasColumnName("updated_at");

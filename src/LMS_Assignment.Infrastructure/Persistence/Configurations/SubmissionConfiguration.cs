@@ -19,7 +19,7 @@ public class SubmissionConfiguration : IEntityTypeConfiguration<Submission>
         builder.Property(s => s.AnswerText).HasColumnName("answer_text");
         builder.Property(s => s.SubmittedAt).HasColumnName("submitted_at");
         builder.Property(s => s.UpdatedAt).HasColumnName("updated_at");
-        builder.Property(s => s.Status).HasColumnName("status").HasDefaultValue(SubmissionStatus.Submitted);
+        builder.Property(s => s.Status).HasColumnName("status").HasColumnType("submission_status").HasDefaultValueSql("'Submitted'::submission_status");
         builder.Property(s => s.MarksObtained).HasColumnName("marks_obtained").HasColumnType("numeric(6,2)");
         builder.Property(s => s.Feedback).HasColumnName("feedback");
         builder.Property(s => s.GradedBy).HasColumnName("graded_by");

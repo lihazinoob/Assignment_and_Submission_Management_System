@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using Npgsql.NameTranslation;
 
 namespace LMS_Assignment.Infrastructure;
 
@@ -15,10 +16,10 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
 
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
-        dataSourceBuilder.MapEnum<UserRole>("user_role");
-        dataSourceBuilder.MapEnum<EnrollmentStatus>("enrollment_status");
-        dataSourceBuilder.MapEnum<AssignmentStatus>("assignment_status");
-        dataSourceBuilder.MapEnum<SubmissionStatus>("submission_status");
+        dataSourceBuilder.MapEnum<UserRole>("user_role", new NpgsqlNullNameTranslator());
+        dataSourceBuilder.MapEnum<EnrollmentStatus>("enrollment_status", new NpgsqlNullNameTranslator());
+        dataSourceBuilder.MapEnum<AssignmentStatus>("assignment_status", new NpgsqlNullNameTranslator());
+        dataSourceBuilder.MapEnum<SubmissionStatus>("submission_status", new NpgsqlNullNameTranslator());
         var dataSource = dataSourceBuilder.Build();
 
         services.AddSingleton(dataSource);

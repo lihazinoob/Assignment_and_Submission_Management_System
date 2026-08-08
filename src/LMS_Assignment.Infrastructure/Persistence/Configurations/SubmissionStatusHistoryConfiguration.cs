@@ -1,4 +1,5 @@
 using LMS_Assignment.Domain.Entities;
+using LMS_Assignment.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -14,8 +15,8 @@ public class SubmissionStatusHistoryConfiguration : IEntityTypeConfiguration<Sub
         builder.Property(h => h.Id).HasColumnName("id");
 
         builder.Property(h => h.SubmissionId).HasColumnName("submission_id");
-        builder.Property(h => h.OldStatus).HasColumnName("old_status");
-        builder.Property(h => h.NewStatus).HasColumnName("new_status").IsRequired();
+        builder.Property(h => h.OldStatus).HasColumnName("old_status").HasColumnType("submission_status");
+        builder.Property(h => h.NewStatus).HasColumnName("new_status").HasColumnType("submission_status").IsRequired();
         builder.Property(h => h.ChangedBy).HasColumnName("changed_by");
         builder.Property(h => h.ChangedAt).HasColumnName("changed_at");
         builder.Property(h => h.Remarks).HasColumnName("remarks").HasMaxLength(500);
