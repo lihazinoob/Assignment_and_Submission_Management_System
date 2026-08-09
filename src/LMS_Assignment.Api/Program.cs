@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using LMS_Assignment.Application;
 using LMS_Assignment.Application.Common.Interfaces;
 using LMS_Assignment.Infrastructure;
@@ -8,7 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
