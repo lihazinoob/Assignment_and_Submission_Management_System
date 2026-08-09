@@ -6,6 +6,7 @@ using LMS_Assignment.Application.Common.Interfaces;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace LMS_Assignment.Tests.Auth;
@@ -45,7 +46,7 @@ public class AuthServiceTests
         jwtTokenGenerator.Setup(g => g.GenerateAccessToken(It.IsAny<User>())).Returns("fake-access-token");
         jwtTokenGenerator.Setup(g => g.GenerateRefreshToken()).Returns("fake-refresh-token");
 
-        var service = new AuthService(context, passwordHasher.Object, jwtTokenGenerator.Object);
+        var service = new AuthService(context, passwordHasher.Object, jwtTokenGenerator.Object, NullLogger<AuthService>.Instance);
 
         return (service, context, user, jwtTokenGenerator);
     }

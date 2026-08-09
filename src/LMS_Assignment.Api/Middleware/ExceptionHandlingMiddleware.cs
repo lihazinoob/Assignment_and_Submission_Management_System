@@ -21,14 +21,17 @@ public class ExceptionHandlingMiddleware
         }
         catch (BusinessRuleException ex)
         {
+            _logger.LogWarning("Business rule rejected {Method} {Path}: {Message}", context.Request.Method, context.Request.Path, ex.Message);
             await WriteErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message);
         }
         catch (InvalidCredentialsException ex)
         {
+            _logger.LogWarning("Authentication failed for {Method} {Path}: {Message}", context.Request.Method, context.Request.Path, ex.Message);
             await WriteErrorAsync(context, StatusCodes.Status401Unauthorized, ex.Message);
         }
         catch (ForbiddenAccessException ex)
         {
+            _logger.LogWarning("Access denied for {Method} {Path}: {Message}", context.Request.Method, context.Request.Path, ex.Message);
             await WriteErrorAsync(context, StatusCodes.Status403Forbidden, ex.Message);
         }
         catch (Exception ex)

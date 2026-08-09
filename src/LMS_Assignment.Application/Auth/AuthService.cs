@@ -4,6 +4,7 @@ using LMS_Assignment.Application.Common.Exceptions;
 using LMS_Assignment.Application.Common.Interfaces;
 using LMS_Assignment.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace LMS_Assignment.Application.Auth;
 
@@ -12,15 +13,18 @@ public class AuthService : IAuthService
     private readonly IApplicationDbContext _context;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         IApplicationDbContext context,
         IPasswordHasher passwordHasher,
-        IJwtTokenGenerator jwtTokenGenerator)
+        IJwtTokenGenerator jwtTokenGenerator,
+        ILogger<AuthService> logger)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _logger = logger;
     }
 
     public async Task<AuthResult> LoginAsync(
@@ -34,11 +38,14 @@ public class AuthService : IAuthService
 
         if (user is null || !user.IsActive || !_passwordHasher.Verify(password, user.PasswordHash))
         {
+            _logger.LogWarning("Failed login attempt for {Email} from {IpAddress}", email, ipAddress);
             throw new InvalidCredentialsException("Invalid email or password.");
         }
 
         var result = IssueTokens(user, ipAddress);
         await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("User {UserId} ({Email}) logged in from {IpAddress}", user.Id, user.Email, ipAddress);
 
         return result;
     }
@@ -59,6 +66,7 @@ public class AuthService : IAuthService
             || storedToken.ExpiresAt <= DateTime.UtcNow
             || !storedToken.User.IsActive)
         {
+            _logger.LogWarning("Rejected refresh token attempt from {IpAddress}", ipAddress);
             throw new InvalidCredentialsException("Invalid or expired refresh token.");
         }
 
@@ -66,6 +74,8 @@ public class AuthService : IAuthService
 
         var result = IssueTokens(storedToken.User, ipAddress);
         await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("User {UserId} refreshed their access token from {IpAddress}", storedToken.User.Id, ipAddress);
 
         return result;
     }
