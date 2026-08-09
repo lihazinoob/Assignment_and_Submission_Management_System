@@ -1,6 +1,8 @@
+using LMS_Assignment.Application.Assignments;
 using LMS_Assignment.Application.Auth;
 using LMS_Assignment.Application.Classes;
 using LMS_Assignment.Application.ClassSubjects;
+using LMS_Assignment.Application.StudentEnrollments;
 using LMS_Assignment.Application.Submissions;
 using LMS_Assignment.Application.Subjects;
 using LMS_Assignment.Application.TeacherSubjectAssignments;
@@ -20,6 +22,8 @@ public static class DependencyInjection
         services.AddScoped<IClassService, ClassService>();
         services.AddScoped<ISubjectService, SubjectService>();
         services.AddScoped<IClassSubjectService, ClassSubjectService>();
+        services.AddScoped<IAssignmentService, AssignmentService>();
+        services.AddScoped<IStudentEnrollmentService, StudentEnrollmentService>();
 
         return services;
     }

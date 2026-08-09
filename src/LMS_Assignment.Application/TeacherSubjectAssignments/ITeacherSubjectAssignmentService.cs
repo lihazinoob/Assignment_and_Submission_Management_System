@@ -9,4 +9,6 @@ public interface ITeacherSubjectAssignmentService
         Guid classSubjectId,
         Guid? assignedBy,
         CancellationToken cancellationToken = default);
+
+    Task<List<TeacherSubjectAssignment>> GetAllAsync(CancellationToken cancellationToken = default);
 }

@@ -29,18 +29,49 @@ public class TeacherSubjectAssignmentService : ITeacherSubjectAssignmentService
             throw new BusinessRuleException($"User '{teacherId}' does not belong to a Teacher account.");
         }
 
+        var classSubject = await _context.ClassSubjects
+            .Include(cs => cs.Class)
+            .Include(cs => cs.Subject)
+            .FirstOrDefaultAsync(cs => cs.Id == classSubjectId, cancellationToken);
+
+        if (classSubject is null)
+        {
+            throw new BusinessRuleException($"No class-subject link found with id '{classSubjectId}'.");
+        }
+
+        var alreadyAssigned = await _context.TeacherSubjectAssignments.AnyAsync(
+            t => t.TeacherId == teacherId && t.ClassSubjectId == classSubjectId,
+            cancellationToken);
+
+        if (alreadyAssigned)
+        {
+            throw new BusinessRuleException("This teacher is already assigned to this class-subject.");
+        }
+
         var assignment = new TeacherSubjectAssignment
         {
             Id = Guid.NewGuid(),
             TeacherId = teacherId,
             ClassSubjectId = classSubjectId,
             AssignedBy = assignedBy,
-            AssignedAt = DateTime.UtcNow
+            AssignedAt = DateTime.UtcNow,
+            Teacher = teacher,
+            ClassSubject = classSubject
         };
 
         _context.TeacherSubjectAssignments.Add(assignment);
         await _context.SaveChangesAsync(cancellationToken);
 
         return assignment;
+    }
+
+    public async Task<List<TeacherSubjectAssignment>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.TeacherSubjectAssignments
+            .Include(t => t.Teacher)
+            .Include(t => t.ClassSubject).ThenInclude(cs => cs.Class)
+            .Include(t => t.ClassSubject).ThenInclude(cs => cs.Subject)
+            .OrderBy(t => t.AssignedAt)
+            .ToListAsync(cancellationToken);
     }
 }
