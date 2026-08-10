@@ -56,4 +56,36 @@ public class UserServiceTests
         await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.CreateUserAsync("New Person", "taken@lms.demo", "AnotherPass123", UserRole.Student));
     }
+
+    [Fact]
+    public async Task GetUsersAsync_WithRoleFilter_ReturnsOnlyMatchingRoleOrderedByName()
+    {
+        var (service, context) = CreateSut();
+
+        context.Users.AddRange(
+            new User { Id = Guid.NewGuid(), FullName = "Zed Teacher", Email = "zed@lms.demo", PasswordHash = "x", Role = UserRole.Teacher, IsActive = true },
+            new User { Id = Guid.NewGuid(), FullName = "Amy Teacher", Email = "amy@lms.demo", PasswordHash = "x", Role = UserRole.Teacher, IsActive = true },
+            new User { Id = Guid.NewGuid(), FullName = "Some Student", Email = "student@lms.demo", PasswordHash = "x", Role = UserRole.Student, IsActive = true });
+        await context.SaveChangesAsync();
+
+        var teachers = await service.GetUsersAsync(UserRole.Teacher);
+
+        Assert.Equal(2, teachers.Count);
+        Assert.Equal(["Amy Teacher", "Zed Teacher"], teachers.Select(u => u.FullName));
+    }
+
+    [Fact]
+    public async Task GetUsersAsync_WithoutRoleFilter_ReturnsAllUsers()
+    {
+        var (service, context) = CreateSut();
+
+        context.Users.AddRange(
+            new User { Id = Guid.NewGuid(), FullName = "A Teacher", Email = "a@lms.demo", PasswordHash = "x", Role = UserRole.Teacher, IsActive = true },
+            new User { Id = Guid.NewGuid(), FullName = "B Student", Email = "b@lms.demo", PasswordHash = "x", Role = UserRole.Student, IsActive = true });
+        await context.SaveChangesAsync();
+
+        var users = await service.GetUsersAsync(null);
+
+        Assert.Equal(2, users.Count);
+    }
 }

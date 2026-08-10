@@ -11,4 +11,8 @@ public interface IUserService
         string password,
         UserRole role,
         CancellationToken cancellationToken = default);
+
+    Task<List<User>> GetUsersAsync(
+        UserRole? role,
+        CancellationToken cancellationToken = default);
 }

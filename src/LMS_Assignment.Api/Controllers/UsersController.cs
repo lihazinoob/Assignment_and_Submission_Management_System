@@ -18,6 +18,18 @@ public class UsersController : ControllerBase
         _userService = userService;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<List<UserResponse>>> GetAll([FromQuery] UserRole? role, CancellationToken cancellationToken)
+    {
+        var users = await _userService.GetUsersAsync(role, cancellationToken);
+
+        var response = users
+            .Select(u => new UserResponse(u.Id, u.FullName, u.Email, u.Role, u.IsActive))
+            .ToList();
+
+        return Ok(response);
+    }
+
     [HttpPost]
     public async Task<ActionResult<UserResponse>> Create(CreateUserRequest request, CancellationToken cancellationToken)
     {

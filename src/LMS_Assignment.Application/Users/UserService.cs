@@ -49,4 +49,17 @@ public class UserService : IUserService
 
         return user;
     }
+
+    public async Task<List<User>> GetUsersAsync(UserRole? role, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Users.AsQueryable();
+
+        if (role.HasValue)
+        {
+            var requestedRole = role.Value;
+            query = query.Where(u => u.Role == requestedRole);
+        }
+
+        return await query.OrderBy(u => u.FullName).ToListAsync(cancellationToken);
+    }
 }
