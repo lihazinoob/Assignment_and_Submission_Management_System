@@ -5,6 +5,7 @@ import { AdminLayout } from "@/layouts/admin-layout"
 import { StudentLayout } from "@/layouts/student-layout"
 import { TeacherLayout } from "@/layouts/teacher-layout"
 import { AdminDashboardPage } from "@/routes/admin/dashboard-page"
+import { AssignmentsPage } from "@/routes/admin/assignments-page"
 import { ClassesPage } from "@/routes/admin/classes-page"
 import { ClassSubjectsPage } from "@/routes/admin/class-subjects-page"
 import { EnrollmentsPage } from "@/routes/admin/enrollments-page"
@@ -15,6 +16,7 @@ import { PlaceholderPage } from "@/routes/placeholder-page"
 import { ProtectedRoute } from "@/routes/protected-route"
 import { RoleRedirect } from "@/routes/role-redirect"
 import { StudentDashboardPage } from "@/routes/student/dashboard-page"
+import { MyAssignmentsPage } from "@/routes/teacher/assignments-page"
 import { TeacherDashboardPage } from "@/routes/teacher/dashboard-page"
 
 function App() {
@@ -37,10 +39,7 @@ function App() {
                 path="teacher-assignments"
                 element={<TeacherAssignmentsPage />}
               />
-              <Route
-                path="assignments"
-                element={<PlaceholderPage title="Assignments" />}
-              />
+              <Route path="assignments" element={<AssignmentsPage />} />
               <Route path="enrollments" element={<EnrollmentsPage />} />
             </Route>
           </Route>
@@ -48,10 +47,7 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={["Teacher"]} />}>
             <Route path="teacher" element={<TeacherLayout />}>
               <Route index element={<TeacherDashboardPage />} />
-              <Route
-                path="assignments"
-                element={<PlaceholderPage title="My Assignments" />}
-              />
+              <Route path="assignments" element={<MyAssignmentsPage />} />
               <Route
                 path="submissions"
                 element={<PlaceholderPage title="Submissions" />}

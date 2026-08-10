@@ -9,7 +9,6 @@ namespace LMS_Assignment.Api.Controllers;
 
 [ApiController]
 [Route("api/teacher-subject-assignments")]
-[Authorize(Roles = nameof(UserRole.Admin))]
 public class TeacherSubjectAssignmentsController : ControllerBase
 {
     private readonly ITeacherSubjectAssignmentService _assignmentService;
@@ -23,10 +22,14 @@ public class TeacherSubjectAssignmentsController : ControllerBase
         _currentUserService = currentUserService;
     }
 
+    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Teacher)}")]
     [HttpGet]
     public async Task<ActionResult<List<TeacherSubjectAssignmentResponse>>> GetAll(CancellationToken cancellationToken)
     {
-        var assignments = await _assignmentService.GetAllAsync(cancellationToken);
+        var assignments = await _assignmentService.GetForCurrentUserAsync(
+            _currentUserService.UserId!.Value,
+            _currentUserService.Role!.Value,
+            cancellationToken);
 
         var response = assignments
             .Select(a => new TeacherSubjectAssignmentResponse(
@@ -43,6 +46,7 @@ public class TeacherSubjectAssignmentsController : ControllerBase
         return Ok(response);
     }
 
+    [Authorize(Roles = nameof(UserRole.Admin))]
     [HttpPost]
     public async Task<ActionResult<TeacherSubjectAssignmentResponse>> Create(
         CreateTeacherSubjectAssignmentRequest request,

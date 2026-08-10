@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react"
+import { useState, type ComponentProps, type ReactNode } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -10,12 +10,16 @@ import {
 
 interface ResourceDialogProps {
   triggerLabel: string
+  triggerVariant?: ComponentProps<typeof Button>["variant"]
+  triggerSize?: ComponentProps<typeof Button>["size"]
   title: string
   children: (close: () => void) => ReactNode
 }
 
 export function ResourceDialog({
   triggerLabel,
+  triggerVariant = "default",
+  triggerSize = "default",
   title,
   children,
 }: ResourceDialogProps) {
@@ -23,7 +27,13 @@ export function ResourceDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Button onClick={() => setOpen(true)}>{triggerLabel}</Button>
+      <Button
+        variant={triggerVariant}
+        size={triggerSize}
+        onClick={() => setOpen(true)}
+      >
+        {triggerLabel}
+      </Button>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

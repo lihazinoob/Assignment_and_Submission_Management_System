@@ -65,13 +65,22 @@ public class TeacherSubjectAssignmentService : ITeacherSubjectAssignmentService
         return assignment;
     }
 
-    public async Task<List<TeacherSubjectAssignment>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<List<TeacherSubjectAssignment>> GetForCurrentUserAsync(
+        Guid userId,
+        UserRole role,
+        CancellationToken cancellationToken = default)
     {
-        return await _context.TeacherSubjectAssignments
+        var query = _context.TeacherSubjectAssignments
             .Include(t => t.Teacher)
             .Include(t => t.ClassSubject).ThenInclude(cs => cs.Class)
             .Include(t => t.ClassSubject).ThenInclude(cs => cs.Subject)
-            .OrderBy(t => t.AssignedAt)
-            .ToListAsync(cancellationToken);
+            .AsQueryable();
+
+        if (role == UserRole.Teacher)
+        {
+            query = query.Where(t => t.TeacherId == userId);
+        }
+
+        return await query.OrderBy(t => t.AssignedAt).ToListAsync(cancellationToken);
     }
 }

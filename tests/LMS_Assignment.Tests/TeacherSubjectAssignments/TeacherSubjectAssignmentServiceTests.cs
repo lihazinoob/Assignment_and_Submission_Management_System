@@ -109,4 +109,37 @@ public class TeacherSubjectAssignmentServiceTests
         await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.AssignTeacherAsync(teacher.Id, classSubject.Id, null));
     }
+
+    [Fact]
+    public async Task GetForCurrentUserAsync_AsAdmin_ReturnsAllAssignments()
+    {
+        var (service, context) = CreateSut();
+        var teacherA = await SeedUserAsync(context, UserRole.Teacher);
+        var teacherB = await SeedUserAsync(context, UserRole.Teacher);
+        var classSubject = await SeedClassSubjectAsync(context);
+
+        await service.AssignTeacherAsync(teacherA.Id, classSubject.Id, null);
+        await service.AssignTeacherAsync(teacherB.Id, classSubject.Id, null);
+
+        var result = await service.GetForCurrentUserAsync(Guid.NewGuid(), UserRole.Admin);
+
+        Assert.Equal(2, result.Count);
+    }
+
+    [Fact]
+    public async Task GetForCurrentUserAsync_AsTeacher_ReturnsOnlyOwnAssignments()
+    {
+        var (service, context) = CreateSut();
+        var teacherA = await SeedUserAsync(context, UserRole.Teacher);
+        var teacherB = await SeedUserAsync(context, UserRole.Teacher);
+        var classSubject = await SeedClassSubjectAsync(context);
+
+        await service.AssignTeacherAsync(teacherA.Id, classSubject.Id, null);
+        await service.AssignTeacherAsync(teacherB.Id, classSubject.Id, null);
+
+        var result = await service.GetForCurrentUserAsync(teacherA.Id, UserRole.Teacher);
+
+        Assert.Single(result);
+        Assert.Equal(teacherA.Id, result[0].TeacherId);
+    }
 }
