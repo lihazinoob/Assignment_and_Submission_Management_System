@@ -12,12 +12,14 @@ import { EnrollmentsPage } from "@/routes/admin/enrollments-page"
 import { SubjectsPage } from "@/routes/admin/subjects-page"
 import { TeacherAssignmentsPage } from "@/routes/admin/teacher-assignments-page"
 import { UsersPage } from "@/routes/admin/users-page"
-import { PlaceholderPage } from "@/routes/placeholder-page"
 import { ProtectedRoute } from "@/routes/protected-route"
 import { RoleRedirect } from "@/routes/role-redirect"
+import { StudentAssignmentsPage } from "@/routes/student/assignments-page"
 import { StudentDashboardPage } from "@/routes/student/dashboard-page"
+import { StudentSubmissionsPage } from "@/routes/student/submissions-page"
 import { MyAssignmentsPage } from "@/routes/teacher/assignments-page"
 import { TeacherDashboardPage } from "@/routes/teacher/dashboard-page"
+import { TeacherSubmissionsPage } from "@/routes/teacher/submissions-page"
 
 function App() {
   return (
@@ -48,24 +50,15 @@ function App() {
             <Route path="teacher" element={<TeacherLayout />}>
               <Route index element={<TeacherDashboardPage />} />
               <Route path="assignments" element={<MyAssignmentsPage />} />
-              <Route
-                path="submissions"
-                element={<PlaceholderPage title="Submissions" />}
-              />
+              <Route path="submissions" element={<TeacherSubmissionsPage />} />
             </Route>
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={["Student"]} />}>
             <Route path="student" element={<StudentLayout />}>
               <Route index element={<StudentDashboardPage />} />
-              <Route
-                path="assignments"
-                element={<PlaceholderPage title="Assignments" />}
-              />
-              <Route
-                path="submissions"
-                element={<PlaceholderPage title="My Submissions" />}
-              />
+              <Route path="assignments" element={<StudentAssignmentsPage />} />
+              <Route path="submissions" element={<StudentSubmissionsPage />} />
             </Route>
           </Route>
         </Route>
