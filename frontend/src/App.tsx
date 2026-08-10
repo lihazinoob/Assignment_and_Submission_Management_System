@@ -5,6 +5,9 @@ import { AdminLayout } from "@/layouts/admin-layout"
 import { StudentLayout } from "@/layouts/student-layout"
 import { TeacherLayout } from "@/layouts/teacher-layout"
 import { AdminDashboardPage } from "@/routes/admin/dashboard-page"
+import { ClassesPage } from "@/routes/admin/classes-page"
+import { ClassSubjectsPage } from "@/routes/admin/class-subjects-page"
+import { SubjectsPage } from "@/routes/admin/subjects-page"
 import { PlaceholderPage } from "@/routes/placeholder-page"
 import { ProtectedRoute } from "@/routes/protected-route"
 import { RoleRedirect } from "@/routes/role-redirect"
@@ -24,18 +27,9 @@ function App() {
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboardPage />} />
               <Route path="users" element={<PlaceholderPage title="Users" />} />
-              <Route
-                path="classes"
-                element={<PlaceholderPage title="Classes" />}
-              />
-              <Route
-                path="subjects"
-                element={<PlaceholderPage title="Subjects" />}
-              />
-              <Route
-                path="class-subjects"
-                element={<PlaceholderPage title="Class-Subjects" />}
-              />
+              <Route path="classes" element={<ClassesPage />} />
+              <Route path="subjects" element={<SubjectsPage />} />
+              <Route path="class-subjects" element={<ClassSubjectsPage />} />
               <Route
                 path="teacher-assignments"
                 element={<PlaceholderPage title="Teacher Assignments" />}
