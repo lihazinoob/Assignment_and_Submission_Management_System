@@ -29,19 +29,4 @@ public class UsersController : ControllerBase
 
         return Ok(response);
     }
-
-    [HttpPost]
-    public async Task<ActionResult<UserResponse>> Create(CreateUserRequest request, CancellationToken cancellationToken)
-    {
-        var user = await _userService.CreateUserAsync(
-            request.FullName,
-            request.Email,
-            request.Password,
-            request.Role,
-            cancellationToken);
-
-        var response = new UserResponse(user.Id, user.FullName, user.Email, user.Role, user.IsActive);
-
-        return Created($"/api/users/{user.Id}", response);
-    }
 }

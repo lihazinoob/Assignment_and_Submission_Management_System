@@ -35,4 +35,15 @@ public class AuthController : ControllerBase
 
         return Ok(new LoginResponse(result.AccessToken, result.RefreshToken, result.AccessTokenExpiresAt));
     }
+
+    [AllowAnonymous]
+    [HttpPost("register")]
+    public async Task<ActionResult<LoginResponse>> Register(RegisterRequest request, CancellationToken cancellationToken)
+    {
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var result = await _authService.RegisterAsync(
+            request.FullName, request.Email, request.Password, request.Role, ipAddress, cancellationToken);
+
+        return Ok(new LoginResponse(result.AccessToken, result.RefreshToken, result.AccessTokenExpiresAt));
+    }
 }

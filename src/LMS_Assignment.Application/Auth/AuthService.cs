@@ -2,7 +2,9 @@ using System.Security.Cryptography;
 using System.Text;
 using LMS_Assignment.Application.Common.Exceptions;
 using LMS_Assignment.Application.Common.Interfaces;
+using LMS_Assignment.Application.Users;
 using LMS_Assignment.Domain.Entities;
+using LMS_Assignment.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -13,17 +15,20 @@ public class AuthService : IAuthService
     private readonly IApplicationDbContext _context;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IUserService _userService;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         IApplicationDbContext context,
         IPasswordHasher passwordHasher,
         IJwtTokenGenerator jwtTokenGenerator,
+        IUserService userService,
         ILogger<AuthService> logger)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _userService = userService;
         _logger = logger;
     }
 
@@ -76,6 +81,29 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("User {UserId} refreshed their access token from {IpAddress}", storedToken.User.Id, ipAddress);
+
+        return result;
+    }
+
+    public async Task<AuthResult> RegisterAsync(
+        string fullName,
+        string email,
+        string password,
+        UserRole role,
+        string? ipAddress,
+        CancellationToken cancellationToken = default)
+    {
+        if (role != UserRole.Teacher && role != UserRole.Student)
+        {
+            throw new BusinessRuleException("Self-registration is only allowed for the Teacher and Student roles.");
+        }
+
+        var user = await _userService.CreateUserAsync(fullName, email, password, role, cancellationToken);
+
+        var result = IssueTokens(user, ipAddress);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("User {UserId} ({Email}) self-registered as {Role} from {IpAddress}", user.Id, user.Email, user.Role, ipAddress);
 
         return result;
     }

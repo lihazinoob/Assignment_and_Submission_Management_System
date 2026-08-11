@@ -3,6 +3,7 @@ using System.Text;
 using LMS_Assignment.Application.Auth;
 using LMS_Assignment.Application.Common.Exceptions;
 using LMS_Assignment.Application.Common.Interfaces;
+using LMS_Assignment.Application.Users;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,9 @@ public class AuthServiceTests
         passwordHasher
             .Setup(h => h.Verify(It.IsAny<string>(), It.IsAny<string>()))
             .Returns(passwordMatches);
+        passwordHasher
+            .Setup(h => h.Hash(It.IsAny<string>()))
+            .Returns("hashed-password");
 
         var jwtTokenGenerator = new Mock<IJwtTokenGenerator>();
         jwtTokenGenerator.SetupGet(g => g.AccessTokenLifetime).Returns(AccessTokenLifetime);
@@ -46,7 +50,9 @@ public class AuthServiceTests
         jwtTokenGenerator.Setup(g => g.GenerateAccessToken(It.IsAny<User>())).Returns("fake-access-token");
         jwtTokenGenerator.Setup(g => g.GenerateRefreshToken()).Returns("fake-refresh-token");
 
-        var service = new AuthService(context, passwordHasher.Object, jwtTokenGenerator.Object, NullLogger<AuthService>.Instance);
+        var userService = new UserService(context, passwordHasher.Object);
+
+        var service = new AuthService(context, passwordHasher.Object, jwtTokenGenerator.Object, userService, NullLogger<AuthService>.Instance);
 
         return (service, context, user, jwtTokenGenerator);
     }
@@ -178,5 +184,53 @@ public class AuthServiceTests
 
         await Assert.ThrowsAsync<InvalidCredentialsException>(
             () => service.RefreshTokenAsync("revoked-token", null));
+    }
+
+    [Fact]
+    public async Task RegisterAsync_WithTeacherRole_CreatesUserAndReturnsTokens()
+    {
+        var (service, context, _, _) = CreateSut(passwordMatches: true);
+
+        var result = await service.RegisterAsync(
+            "New Teacher", "new.teacher@lms.demo", "TempPass123", UserRole.Teacher, "127.0.0.1");
+
+        Assert.Equal("fake-access-token", result.AccessToken);
+        Assert.Equal("fake-refresh-token", result.RefreshToken);
+
+        var stored = await context.Users.SingleAsync(u => u.Email == "new.teacher@lms.demo");
+        Assert.Equal(UserRole.Teacher, stored.Role);
+
+        var storedToken = await context.RefreshTokens.SingleAsync(t => t.UserId == stored.Id);
+        Assert.Equal("127.0.0.1", storedToken.CreatedByIp);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_WithStudentRole_CreatesUserAndReturnsTokens()
+    {
+        var (service, context, _, _) = CreateSut(passwordMatches: true);
+
+        await service.RegisterAsync(
+            "New Student", "new.student@lms.demo", "TempPass123", UserRole.Student, null);
+
+        var stored = await context.Users.SingleAsync(u => u.Email == "new.student@lms.demo");
+        Assert.Equal(UserRole.Student, stored.Role);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_WithAdminRole_ThrowsBusinessRuleException()
+    {
+        var (service, _, _, _) = CreateSut(passwordMatches: true);
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => service.RegisterAsync("New Admin", "new.admin@lms.demo", "TempPass123", UserRole.Admin, null));
+    }
+
+    [Fact]
+    public async Task RegisterAsync_WithAlreadyTakenEmail_ThrowsBusinessRuleException()
+    {
+        var (service, _, user, _) = CreateSut(passwordMatches: true);
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => service.RegisterAsync("Someone Else", user.Email, "TempPass123", UserRole.Teacher, null));
     }
 }

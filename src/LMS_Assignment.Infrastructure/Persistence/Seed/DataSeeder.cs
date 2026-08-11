@@ -16,40 +16,17 @@ public static class DataSeeder
 
         var now = DateTime.UtcNow;
 
-        context.Users.AddRange(
-            new User
-            {
-                Id = Guid.NewGuid(),
-                FullName = "Demo Admin",
-                Email = "admin@lms.demo",
-                PasswordHash = passwordHasher.Hash("Admin@123"),
-                Role = UserRole.Admin,
-                IsActive = true,
-                CreatedAt = now,
-                UpdatedAt = now
-            },
-            new User
-            {
-                Id = Guid.NewGuid(),
-                FullName = "Demo Teacher",
-                Email = "teacher@lms.demo",
-                PasswordHash = passwordHasher.Hash("Teacher@123"),
-                Role = UserRole.Teacher,
-                IsActive = true,
-                CreatedAt = now,
-                UpdatedAt = now
-            },
-            new User
-            {
-                Id = Guid.NewGuid(),
-                FullName = "Demo Student",
-                Email = "student@lms.demo",
-                PasswordHash = passwordHasher.Hash("Student@123"),
-                Role = UserRole.Student,
-                IsActive = true,
-                CreatedAt = now,
-                UpdatedAt = now
-            });
+        context.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            FullName = "Demo Admin",
+            Email = "admin@lms.demo",
+            PasswordHash = passwordHasher.Hash("Admin@123"),
+            Role = UserRole.Admin,
+            IsActive = true,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
 
         await context.SaveChangesAsync();
     }
