@@ -41,10 +41,16 @@ public class AuthService : IAuthService
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
 
-        if (user is null || !user.IsActive || !_passwordHasher.Verify(password, user.PasswordHash))
+        if (user is null || !_passwordHasher.Verify(password, user.PasswordHash))
         {
             _logger.LogWarning("Failed login attempt for {Email} from {IpAddress}", email, ipAddress);
             throw new InvalidCredentialsException("Invalid email or password.");
+        }
+
+        if (!user.IsActive)
+        {
+            _logger.LogWarning("Login rejected for deactivated user {UserId} ({Email}) from {IpAddress}", user.Id, user.Email, ipAddress);
+            throw new ForbiddenAccessException("Your account has been disabled by the administrator.");
         }
 
         var result = IssueTokens(user, ipAddress);

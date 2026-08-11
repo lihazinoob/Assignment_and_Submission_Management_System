@@ -99,12 +99,23 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task LoginAsync_WithInactiveUser_ThrowsInvalidCredentialsException()
+    public async Task LoginAsync_WithInactiveUserAndCorrectPassword_ThrowsForbiddenAccessException()
     {
         var (service, _, user, _) = CreateSut(passwordMatches: true, isActive: false);
 
-        await Assert.ThrowsAsync<InvalidCredentialsException>(
+        await Assert.ThrowsAsync<ForbiddenAccessException>(
             () => service.LoginAsync(user.Email, "correct-password", null));
+    }
+
+    [Fact]
+    public async Task LoginAsync_WithInactiveUserAndWrongPassword_ThrowsInvalidCredentialsException()
+    {
+        // Password is checked before the active-status check, so a wrong password never
+        // reveals whether the account exists and is merely deactivated.
+        var (service, _, user, _) = CreateSut(passwordMatches: false, isActive: false);
+
+        await Assert.ThrowsAsync<InvalidCredentialsException>(
+            () => service.LoginAsync(user.Email, "wrong-password", null));
     }
 
     [Fact]
