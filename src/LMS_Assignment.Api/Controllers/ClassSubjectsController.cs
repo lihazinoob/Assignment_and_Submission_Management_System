@@ -1,5 +1,6 @@
 using LMS_Assignment.Api.Controllers.Dtos;
 using LMS_Assignment.Application.ClassSubjects;
+using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,9 +23,7 @@ public class ClassSubjectsController : ControllerBase
     {
         var classSubjects = await _classSubjectService.GetAllAsync(cancellationToken);
 
-        var response = classSubjects
-            .Select(cs => new ClassSubjectResponse(cs.Id, cs.ClassId, cs.Class.Name, cs.SubjectId, cs.Subject.Name))
-            .ToList();
+        var response = classSubjects.Select(ToResponse).ToList();
 
         return Ok(response);
     }
@@ -35,13 +34,36 @@ public class ClassSubjectsController : ControllerBase
     {
         var classSubject = await _classSubjectService.CreateAsync(request.ClassId, request.SubjectId, cancellationToken);
 
-        var response = new ClassSubjectResponse(
-            classSubject.Id,
-            classSubject.ClassId,
-            classSubject.Class.Name,
-            classSubject.SubjectId,
-            classSubject.Subject.Name);
-
-        return Created($"/api/class-subjects/{classSubject.Id}", response);
+        return Created($"/api/class-subjects/{classSubject.Id}", ToResponse(classSubject));
     }
+
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    [HttpPost("{id:guid}/deactivate")]
+    public async Task<ActionResult<ClassSubjectResponse>> Deactivate(Guid id, CancellationToken cancellationToken)
+    {
+        var classSubject = await _classSubjectService.DeactivateAsync(id, cancellationToken);
+
+        return Ok(ToResponse(classSubject));
+    }
+
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    [HttpPost("{id:guid}/activate")]
+    public async Task<ActionResult<ClassSubjectResponse>> Activate(Guid id, CancellationToken cancellationToken)
+    {
+        var classSubject = await _classSubjectService.ActivateAsync(id, cancellationToken);
+
+        return Ok(ToResponse(classSubject));
+    }
+
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        await _classSubjectService.DeleteAsync(id, cancellationToken);
+
+        return NoContent();
+    }
+
+    private static ClassSubjectResponse ToResponse(ClassSubject classSubject) =>
+        new(classSubject.Id, classSubject.ClassId, classSubject.Class.Name, classSubject.SubjectId, classSubject.Subject.Name, classSubject.IsActive);
 }

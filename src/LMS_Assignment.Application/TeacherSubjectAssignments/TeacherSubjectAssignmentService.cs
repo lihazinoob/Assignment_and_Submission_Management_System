@@ -44,6 +44,11 @@ public class TeacherSubjectAssignmentService : ITeacherSubjectAssignmentService
             throw new BusinessRuleException("This class has been deactivated. No new activity is allowed.");
         }
 
+        if (!classSubject.IsActive)
+        {
+            throw new BusinessRuleException("This class-subject link has been deactivated. No new activity is allowed.");
+        }
+
         var alreadyAssigned = await _context.TeacherSubjectAssignments.AnyAsync(
             t => t.TeacherId == teacherId && t.ClassSubjectId == classSubjectId,
             cancellationToken);

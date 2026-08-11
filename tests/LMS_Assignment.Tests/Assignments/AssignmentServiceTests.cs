@@ -117,6 +117,20 @@ public class AssignmentServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_WithDeactivatedClassSubject_ThrowsBusinessRuleException()
+    {
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
+        tsa.ClassSubject.IsActive = false;
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => sut.CreateAsync(tsa.Id, "Homework 1", null, DateTime.UtcNow.AddDays(7), 100, true, teacher.Id));
+    }
+
+    [Fact]
     public async Task UpdateAsync_OnPublishedAssignment_ThrowsBusinessRuleException()
     {
         var context = TestApplicationDbContext.CreateNew();
@@ -138,6 +152,21 @@ public class AssignmentServiceTests
         var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
         var assignment = await SeedAssignmentAsync(context, tsa);
         tsa.ClassSubject.Class.IsActive = false;
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => sut.UpdateAsync(assignment.Id, "New Title", null, DateTime.UtcNow.AddDays(10), 50, true, teacher.Id));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WithDeactivatedClassSubject_ThrowsBusinessRuleException()
+    {
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
+        var assignment = await SeedAssignmentAsync(context, tsa);
+        tsa.ClassSubject.IsActive = false;
         await context.SaveChangesAsync();
 
         await Assert.ThrowsAsync<BusinessRuleException>(
@@ -193,6 +222,20 @@ public class AssignmentServiceTests
         var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
         var assignment = await SeedAssignmentAsync(context, tsa);
         tsa.ClassSubject.Class.IsActive = false;
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(() => sut.PublishAsync(assignment.Id, teacher.Id));
+    }
+
+    [Fact]
+    public async Task PublishAsync_WithDeactivatedClassSubject_ThrowsBusinessRuleException()
+    {
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
+        var assignment = await SeedAssignmentAsync(context, tsa);
+        tsa.ClassSubject.IsActive = false;
         await context.SaveChangesAsync();
 
         await Assert.ThrowsAsync<BusinessRuleException>(() => sut.PublishAsync(assignment.Id, teacher.Id));

@@ -6,4 +6,7 @@ public interface IClassSubjectService
 {
     Task<ClassSubject> CreateAsync(Guid classId, Guid subjectId, CancellationToken cancellationToken = default);
     Task<List<ClassSubject>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<ClassSubject> DeactivateAsync(Guid classSubjectId, CancellationToken cancellationToken = default);
+    Task<ClassSubject> ActivateAsync(Guid classSubjectId, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid classSubjectId, CancellationToken cancellationToken = default);
 }

@@ -66,4 +66,62 @@ public class ClassSubjectService : IClassSubjectService
             .OrderBy(cs => cs.Class.Name)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<ClassSubject> DeactivateAsync(Guid classSubjectId, CancellationToken cancellationToken = default)
+    {
+        var classSubject = await _context.ClassSubjects
+            .Include(cs => cs.Class)
+            .Include(cs => cs.Subject)
+            .FirstOrDefaultAsync(cs => cs.Id == classSubjectId, cancellationToken);
+
+        if (classSubject is null)
+        {
+            throw new BusinessRuleException($"No class-subject link found with id '{classSubjectId}'.");
+        }
+
+        classSubject.IsActive = false;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return classSubject;
+    }
+
+    public async Task<ClassSubject> ActivateAsync(Guid classSubjectId, CancellationToken cancellationToken = default)
+    {
+        var classSubject = await _context.ClassSubjects
+            .Include(cs => cs.Class)
+            .Include(cs => cs.Subject)
+            .FirstOrDefaultAsync(cs => cs.Id == classSubjectId, cancellationToken);
+
+        if (classSubject is null)
+        {
+            throw new BusinessRuleException($"No class-subject link found with id '{classSubjectId}'.");
+        }
+
+        classSubject.IsActive = true;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return classSubject;
+    }
+
+    public async Task DeleteAsync(Guid classSubjectId, CancellationToken cancellationToken = default)
+    {
+        var classSubject = await _context.ClassSubjects.FirstOrDefaultAsync(cs => cs.Id == classSubjectId, cancellationToken);
+        if (classSubject is null)
+        {
+            throw new BusinessRuleException($"No class-subject link found with id '{classSubjectId}'.");
+        }
+
+        var hasTeacherAssignments = await _context.TeacherSubjectAssignments.AnyAsync(
+            t => t.ClassSubjectId == classSubjectId,
+            cancellationToken);
+
+        if (hasTeacherAssignments)
+        {
+            throw new BusinessRuleException(
+                "This class-subject link has assigned teachers and cannot be deleted. Deactivate it instead.");
+        }
+
+        _context.ClassSubjects.Remove(classSubject);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

@@ -40,6 +40,11 @@ public class SubmissionService : ISubmissionService
             throw new BusinessRuleException("This class has been deactivated. No new activity is allowed.");
         }
 
+        if (!assignment.TeacherSubjectAssignment.ClassSubject.IsActive)
+        {
+            throw new BusinessRuleException("This class-subject link has been deactivated. No new activity is allowed.");
+        }
+
         var classId = assignment.TeacherSubjectAssignment.ClassSubject.ClassId;
         var activeStatus = EnrollmentStatus.Active;
         var isEnrolled = await _context.StudentEnrollments.AnyAsync(
@@ -99,6 +104,11 @@ public class SubmissionService : ISubmissionService
         if (!submission.Assignment.TeacherSubjectAssignment.ClassSubject.Class.IsActive)
         {
             throw new BusinessRuleException("This class has been deactivated. No new activity is allowed.");
+        }
+
+        if (!submission.Assignment.TeacherSubjectAssignment.ClassSubject.IsActive)
+        {
+            throw new BusinessRuleException("This class-subject link has been deactivated. No new activity is allowed.");
         }
 
         if (!submission.Assignment.AllowResubmission)

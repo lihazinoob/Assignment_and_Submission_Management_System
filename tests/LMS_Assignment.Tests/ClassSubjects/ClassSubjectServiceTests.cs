@@ -85,4 +85,77 @@ public class ClassSubjectServiceTests
         await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.CreateAsync(@class.Id, subject.Id));
     }
+
+    [Fact]
+    public async Task DeactivateAsync_ThenActivateAsync_TogglesIsActive()
+    {
+        var (service, context) = CreateSut();
+        var (@class, subject) = await SeedClassAndSubjectAsync(context);
+        var classSubject = await service.CreateAsync(@class.Id, subject.Id);
+
+        var deactivated = await service.DeactivateAsync(classSubject.Id);
+        Assert.False(deactivated.IsActive);
+
+        var activated = await service.ActivateAsync(classSubject.Id);
+        Assert.True(activated.IsActive);
+    }
+
+    [Fact]
+    public async Task DeactivateAsync_WithUnknownId_ThrowsBusinessRuleException()
+    {
+        var (service, _) = CreateSut();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => service.DeactivateAsync(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithNoTeacherAssignments_RemovesLink()
+    {
+        var (service, context) = CreateSut();
+        var (@class, subject) = await SeedClassAndSubjectAsync(context);
+        var classSubject = await service.CreateAsync(@class.Id, subject.Id);
+
+        await service.DeleteAsync(classSubject.Id);
+
+        Assert.False(await context.ClassSubjects.AnyAsync(cs => cs.Id == classSubject.Id));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithTeacherAssignment_ThrowsBusinessRuleException()
+    {
+        var (service, context) = CreateSut();
+        var (@class, subject) = await SeedClassAndSubjectAsync(context);
+        var classSubject = await service.CreateAsync(@class.Id, subject.Id);
+
+        var teacher = new User
+        {
+            Id = Guid.NewGuid(),
+            FullName = "Teacher",
+            Email = $"{Guid.NewGuid()}@lms.demo",
+            PasswordHash = "irrelevant",
+            Role = Domain.Enums.UserRole.Teacher,
+            IsActive = true
+        };
+        context.Users.Add(teacher);
+        context.TeacherSubjectAssignments.Add(new TeacherSubjectAssignment
+        {
+            Id = Guid.NewGuid(),
+            TeacherId = teacher.Id,
+            ClassSubjectId = classSubject.Id
+        });
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => service.DeleteAsync(classSubject.Id));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithUnknownId_ThrowsBusinessRuleException()
+    {
+        var (service, _) = CreateSut();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => service.DeleteAsync(Guid.NewGuid()));
+    }
 }

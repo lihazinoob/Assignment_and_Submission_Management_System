@@ -46,6 +46,11 @@ public class AssignmentService : IAssignmentService
             throw new BusinessRuleException("This class has been deactivated. No new activity is allowed.");
         }
 
+        if (!teacherSubjectAssignment.ClassSubject.IsActive)
+        {
+            throw new BusinessRuleException("This class-subject link has been deactivated. No new activity is allowed.");
+        }
+
         if (maxMarks <= 0)
         {
             throw new BusinessRuleException("Max marks must be greater than zero.");
@@ -92,6 +97,11 @@ public class AssignmentService : IAssignmentService
             throw new BusinessRuleException("This class has been deactivated. No new activity is allowed.");
         }
 
+        if (!assignment.TeacherSubjectAssignment.ClassSubject.IsActive)
+        {
+            throw new BusinessRuleException("This class-subject link has been deactivated. No new activity is allowed.");
+        }
+
         if (assignment.Status != AssignmentStatus.Draft)
         {
             throw new BusinessRuleException("Only draft assignments can be edited.");
@@ -120,6 +130,11 @@ public class AssignmentService : IAssignmentService
         if (!assignment.TeacherSubjectAssignment.ClassSubject.Class.IsActive)
         {
             throw new BusinessRuleException("This class has been deactivated. No new activity is allowed.");
+        }
+
+        if (!assignment.TeacherSubjectAssignment.ClassSubject.IsActive)
+        {
+            throw new BusinessRuleException("This class-subject link has been deactivated. No new activity is allowed.");
         }
 
         if (assignment.Status != AssignmentStatus.Draft)

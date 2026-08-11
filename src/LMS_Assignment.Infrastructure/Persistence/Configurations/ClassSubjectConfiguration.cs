@@ -15,6 +15,7 @@ public class ClassSubjectConfiguration : IEntityTypeConfiguration<ClassSubject>
 
         builder.Property(cs => cs.ClassId).HasColumnName("class_id");
         builder.Property(cs => cs.SubjectId).HasColumnName("subject_id");
+        builder.Property(cs => cs.IsActive).HasColumnName("is_active").HasDefaultValue(true);
         builder.Property(cs => cs.CreatedAt).HasColumnName("created_at");
 
         builder.HasIndex(cs => new { cs.ClassId, cs.SubjectId }).IsUnique();
