@@ -16,3 +16,13 @@ export function getTeachers() {
 export function getStudents() {
   return getUsers("Student")
 }
+
+export async function deactivateUser(id: string) {
+  const { data } = await apiClient.post<User>(`/users/${id}/deactivate`)
+  return data
+}
+
+export async function activateUser(id: string) {
+  const { data } = await apiClient.post<User>(`/users/${id}/activate`)
+  return data
+}
