@@ -73,4 +73,16 @@ public class ClassSubjectServiceTests
         await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.CreateAsync(@class.Id, subject.Id));
     }
+
+    [Fact]
+    public async Task CreateAsync_WithDeactivatedClass_ThrowsBusinessRuleException()
+    {
+        var (service, context) = CreateSut();
+        var (@class, subject) = await SeedClassAndSubjectAsync(context);
+        @class.IsActive = false;
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => service.CreateAsync(@class.Id, subject.Id));
+    }
 }

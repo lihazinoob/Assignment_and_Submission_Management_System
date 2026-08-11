@@ -111,6 +111,19 @@ public class TeacherSubjectAssignmentServiceTests
     }
 
     [Fact]
+    public async Task AssignTeacherAsync_WithDeactivatedClass_ThrowsBusinessRuleException()
+    {
+        var (service, context) = CreateSut();
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var classSubject = await SeedClassSubjectAsync(context);
+        classSubject.Class.IsActive = false;
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => service.AssignTeacherAsync(teacher.Id, classSubject.Id, null));
+    }
+
+    [Fact]
     public async Task GetForCurrentUserAsync_AsAdmin_ReturnsAllAssignments()
     {
         var (service, context) = CreateSut();

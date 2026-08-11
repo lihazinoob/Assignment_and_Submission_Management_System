@@ -41,6 +41,11 @@ public class AssignmentService : IAssignmentService
             throw new ForbiddenAccessException("You can only create assignments for your own teacher-subject assignments.");
         }
 
+        if (!teacherSubjectAssignment.ClassSubject.Class.IsActive)
+        {
+            throw new BusinessRuleException("This class has been deactivated. No new activity is allowed.");
+        }
+
         if (maxMarks <= 0)
         {
             throw new BusinessRuleException("Max marks must be greater than zero.");
@@ -82,6 +87,11 @@ public class AssignmentService : IAssignmentService
     {
         var assignment = await LoadOwnedAssignmentAsync(assignmentId, teacherId, cancellationToken);
 
+        if (!assignment.TeacherSubjectAssignment.ClassSubject.Class.IsActive)
+        {
+            throw new BusinessRuleException("This class has been deactivated. No new activity is allowed.");
+        }
+
         if (assignment.Status != AssignmentStatus.Draft)
         {
             throw new BusinessRuleException("Only draft assignments can be edited.");
@@ -106,6 +116,11 @@ public class AssignmentService : IAssignmentService
     public async Task<Assignment> PublishAsync(Guid assignmentId, Guid teacherId, CancellationToken cancellationToken = default)
     {
         var assignment = await LoadOwnedAssignmentAsync(assignmentId, teacherId, cancellationToken);
+
+        if (!assignment.TeacherSubjectAssignment.ClassSubject.Class.IsActive)
+        {
+            throw new BusinessRuleException("This class has been deactivated. No new activity is allowed.");
+        }
 
         if (assignment.Status != AssignmentStatus.Draft)
         {

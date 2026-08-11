@@ -33,6 +33,11 @@ public class StudentEnrollmentService : IStudentEnrollmentService
             throw new BusinessRuleException($"No class found with id '{classId}'.");
         }
 
+        if (!@class.IsActive)
+        {
+            throw new BusinessRuleException("This class has been deactivated. No new activity is allowed.");
+        }
+
         var alreadyEnrolled = await _context.StudentEnrollments.AnyAsync(
             e => e.StudentId == studentId && e.ClassId == classId,
             cancellationToken);

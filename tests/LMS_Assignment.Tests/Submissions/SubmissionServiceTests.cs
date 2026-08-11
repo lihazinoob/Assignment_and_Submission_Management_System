@@ -140,6 +140,21 @@ public class SubmissionServiceTests
     }
 
     [Fact]
+    public async Task SubmitAsync_WithDeactivatedClass_ThrowsBusinessRuleException()
+    {
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var student = await SeedUserAsync(context, UserRole.Student);
+        var assignment = await SeedPublishedAssignmentAsync(context, teacher, student);
+        assignment.TeacherSubjectAssignment.ClassSubject.Class.IsActive = false;
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => sut.SubmitAsync(assignment.Id, "Answer", student.Id));
+    }
+
+    [Fact]
     public async Task UpdateAsync_ByOwningStudentBeforeDeadline_UpdatesAnswer()
     {
         var context = TestApplicationDbContext.CreateNew();
@@ -184,6 +199,22 @@ public class SubmissionServiceTests
     }
 
     [Fact]
+    public async Task UpdateAsync_WithDeactivatedClass_ThrowsBusinessRuleException()
+    {
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var student = await SeedUserAsync(context, UserRole.Student);
+        var assignment = await SeedPublishedAssignmentAsync(context, teacher, student);
+        var submission = await sut.SubmitAsync(assignment.Id, "First answer", student.Id);
+        assignment.TeacherSubjectAssignment.ClassSubject.Class.IsActive = false;
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => sut.UpdateAsync(submission.Id, "Revised", student.Id));
+    }
+
+    [Fact]
     public async Task UpdateAsync_AfterDeadline_ThrowsBusinessRuleException()
     {
         var context = TestApplicationDbContext.CreateNew();
@@ -215,6 +246,25 @@ public class SubmissionServiceTests
         Assert.Equal(SubmissionStatus.Graded, result.Status);
         Assert.Equal(90, result.MarksObtained);
         Assert.Equal(teacher.Id, result.GradedBy);
+    }
+
+    [Fact]
+    public async Task GradeSubmissionAsync_WithDeactivatedClass_StillSucceeds()
+    {
+        // Grading an existing submission is finishing work that already exists, not new
+        // activity, so it stays allowed even once the class has been deactivated.
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var student = await SeedUserAsync(context, UserRole.Student);
+        var assignment = await SeedPublishedAssignmentAsync(context, teacher, student);
+        var submission = await sut.SubmitAsync(assignment.Id, "Answer", student.Id);
+        assignment.TeacherSubjectAssignment.ClassSubject.Class.IsActive = false;
+        await context.SaveChangesAsync();
+
+        var result = await sut.GradeSubmissionAsync(submission.Id, 90, "Good job", teacher.Id);
+
+        Assert.Equal(SubmissionStatus.Graded, result.Status);
     }
 
     [Fact]

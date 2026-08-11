@@ -46,4 +46,81 @@ public class ClassService : IClassService
             .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<Class> UpdateAsync(
+        Guid classId,
+        string name,
+        string academicYear,
+        CancellationToken cancellationToken = default)
+    {
+        var @class = await _context.Classes.FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
+        if (@class is null)
+        {
+            throw new BusinessRuleException($"No class found with id '{classId}'.");
+        }
+
+        var duplicateExists = await _context.Classes.AnyAsync(
+            c => c.Id != classId && c.Name == name && c.AcademicYear == academicYear,
+            cancellationToken);
+
+        if (duplicateExists)
+        {
+            throw new BusinessRuleException($"A class named '{name}' already exists for academic year '{academicYear}'.");
+        }
+
+        @class.Name = name;
+        @class.AcademicYear = academicYear;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return @class;
+    }
+
+    public async Task<Class> DeactivateAsync(Guid classId, CancellationToken cancellationToken = default)
+    {
+        var @class = await _context.Classes.FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
+        if (@class is null)
+        {
+            throw new BusinessRuleException($"No class found with id '{classId}'.");
+        }
+
+        @class.IsActive = false;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return @class;
+    }
+
+    public async Task<Class> ActivateAsync(Guid classId, CancellationToken cancellationToken = default)
+    {
+        var @class = await _context.Classes.FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
+        if (@class is null)
+        {
+            throw new BusinessRuleException($"No class found with id '{classId}'.");
+        }
+
+        @class.IsActive = true;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return @class;
+    }
+
+    public async Task DeleteAsync(Guid classId, CancellationToken cancellationToken = default)
+    {
+        var @class = await _context.Classes.FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
+        if (@class is null)
+        {
+            throw new BusinessRuleException($"No class found with id '{classId}'.");
+        }
+
+        var hasClassSubjects = await _context.ClassSubjects.AnyAsync(cs => cs.ClassId == classId, cancellationToken);
+        var hasEnrollments = await _context.StudentEnrollments.AnyAsync(e => e.ClassId == classId, cancellationToken);
+
+        if (hasClassSubjects || hasEnrollments)
+        {
+            throw new BusinessRuleException(
+                "This class has linked subjects or enrolled students and cannot be deleted. Deactivate it instead.");
+        }
+
+        _context.Classes.Remove(@class);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

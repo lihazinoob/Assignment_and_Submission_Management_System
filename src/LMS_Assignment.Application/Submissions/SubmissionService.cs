@@ -22,7 +22,7 @@ public class SubmissionService : ISubmissionService
         CancellationToken cancellationToken = default)
     {
         var assignment = await _context.Assignments
-            .Include(a => a.TeacherSubjectAssignment).ThenInclude(t => t.ClassSubject)
+            .Include(a => a.TeacherSubjectAssignment).ThenInclude(t => t.ClassSubject).ThenInclude(cs => cs.Class)
             .FirstOrDefaultAsync(a => a.Id == assignmentId && !a.IsDeleted, cancellationToken);
 
         if (assignment is null)
@@ -33,6 +33,11 @@ public class SubmissionService : ISubmissionService
         if (assignment.Status != AssignmentStatus.Published)
         {
             throw new BusinessRuleException("You can only submit to published assignments.");
+        }
+
+        if (!assignment.TeacherSubjectAssignment.ClassSubject.Class.IsActive)
+        {
+            throw new BusinessRuleException("This class has been deactivated. No new activity is allowed.");
         }
 
         var classId = assignment.TeacherSubjectAssignment.ClassSubject.ClassId;
@@ -90,6 +95,11 @@ public class SubmissionService : ISubmissionService
         CancellationToken cancellationToken = default)
     {
         var submission = await LoadOwnedSubmissionAsync(submissionId, studentId, cancellationToken);
+
+        if (!submission.Assignment.TeacherSubjectAssignment.ClassSubject.Class.IsActive)
+        {
+            throw new BusinessRuleException("This class has been deactivated. No new activity is allowed.");
+        }
 
         if (!submission.Assignment.AllowResubmission)
         {
@@ -261,7 +271,7 @@ public class SubmissionService : ISubmissionService
     {
         var submission = await _context.Submissions
             .Include(s => s.Student)
-            .Include(s => s.Assignment)
+            .Include(s => s.Assignment).ThenInclude(a => a.TeacherSubjectAssignment).ThenInclude(t => t.ClassSubject).ThenInclude(cs => cs.Class)
             .FirstOrDefaultAsync(s => s.Id == submissionId, cancellationToken);
 
         if (submission is null)

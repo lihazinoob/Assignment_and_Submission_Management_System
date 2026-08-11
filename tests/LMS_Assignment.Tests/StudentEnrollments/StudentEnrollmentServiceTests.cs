@@ -100,4 +100,17 @@ public class StudentEnrollmentServiceTests
         await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.EnrollAsync(student.Id, @class.Id, null));
     }
+
+    [Fact]
+    public async Task EnrollAsync_WithDeactivatedClass_ThrowsBusinessRuleException()
+    {
+        var (service, context) = CreateSut();
+        var student = await SeedUserAsync(context, UserRole.Student);
+        var @class = await SeedClassAsync(context);
+        @class.IsActive = false;
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => service.EnrollAsync(student.Id, @class.Id, null));
+    }
 }

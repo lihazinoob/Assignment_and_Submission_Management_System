@@ -22,6 +22,11 @@ public class ClassSubjectService : IClassSubjectService
             throw new BusinessRuleException($"No class found with id '{classId}'.");
         }
 
+        if (!@class.IsActive)
+        {
+            throw new BusinessRuleException("This class has been deactivated. No new activity is allowed.");
+        }
+
         var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.Id == subjectId, cancellationToken);
         if (subject is null)
         {

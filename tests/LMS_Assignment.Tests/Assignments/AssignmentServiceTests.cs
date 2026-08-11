@@ -103,6 +103,20 @@ public class AssignmentServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_WithDeactivatedClass_ThrowsBusinessRuleException()
+    {
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
+        tsa.ClassSubject.Class.IsActive = false;
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => sut.CreateAsync(tsa.Id, "Homework 1", null, DateTime.UtcNow.AddDays(7), 100, true, teacher.Id));
+    }
+
+    [Fact]
     public async Task UpdateAsync_OnPublishedAssignment_ThrowsBusinessRuleException()
     {
         var context = TestApplicationDbContext.CreateNew();
@@ -110,6 +124,21 @@ public class AssignmentServiceTests
         var teacher = await SeedUserAsync(context, UserRole.Teacher);
         var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
         var assignment = await SeedAssignmentAsync(context, tsa, AssignmentStatus.Published);
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => sut.UpdateAsync(assignment.Id, "New Title", null, DateTime.UtcNow.AddDays(10), 50, true, teacher.Id));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WithDeactivatedClass_ThrowsBusinessRuleException()
+    {
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
+        var assignment = await SeedAssignmentAsync(context, tsa);
+        tsa.ClassSubject.Class.IsActive = false;
+        await context.SaveChangesAsync();
 
         await Assert.ThrowsAsync<BusinessRuleException>(
             () => sut.UpdateAsync(assignment.Id, "New Title", null, DateTime.UtcNow.AddDays(10), 50, true, teacher.Id));
@@ -156,6 +185,20 @@ public class AssignmentServiceTests
     }
 
     [Fact]
+    public async Task PublishAsync_WithDeactivatedClass_ThrowsBusinessRuleException()
+    {
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
+        var assignment = await SeedAssignmentAsync(context, tsa);
+        tsa.ClassSubject.Class.IsActive = false;
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(() => sut.PublishAsync(assignment.Id, teacher.Id));
+    }
+
+    [Fact]
     public async Task DeleteAsync_WithExistingSubmissions_ThrowsBusinessRuleException()
     {
         var context = TestApplicationDbContext.CreateNew();
@@ -179,6 +222,25 @@ public class AssignmentServiceTests
         var teacher = await SeedUserAsync(context, UserRole.Teacher);
         var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
         var assignment = await SeedAssignmentAsync(context, tsa);
+
+        await sut.DeleteAsync(assignment.Id, teacher.Id);
+
+        var stored = await context.Assignments.SingleAsync(a => a.Id == assignment.Id);
+        Assert.True(stored.IsDeleted);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithDeactivatedClass_StillSucceeds()
+    {
+        // Unlike Create/Update/Publish, deleting a Teacher's own draft assignment is cleanup,
+        // not new activity, so it stays allowed even once the class has been deactivated.
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
+        var assignment = await SeedAssignmentAsync(context, tsa);
+        tsa.ClassSubject.Class.IsActive = false;
+        await context.SaveChangesAsync();
 
         await sut.DeleteAsync(assignment.Id, teacher.Id);
 
