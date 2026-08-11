@@ -9,3 +9,8 @@ export interface CreateClassRequest {
   name: string
   academicYear: string
 }
+
+export interface UpdateClassRequest {
+  name: string
+  academicYear: string
+}
