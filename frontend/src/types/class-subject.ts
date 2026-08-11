@@ -4,6 +4,7 @@ export interface ClassSubject {
   className: string
   subjectId: string
   subjectName: string
+  isActive: boolean
 }
 
 export interface CreateClassSubjectRequest {

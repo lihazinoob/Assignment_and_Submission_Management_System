@@ -10,3 +10,17 @@ export async function createClassSubject(request: CreateClassSubjectRequest) {
   const { data } = await apiClient.post<ClassSubject>("/class-subjects", request)
   return data
 }
+
+export async function deactivateClassSubject(id: string) {
+  const { data } = await apiClient.post<ClassSubject>(`/class-subjects/${id}/deactivate`)
+  return data
+}
+
+export async function activateClassSubject(id: string) {
+  const { data } = await apiClient.post<ClassSubject>(`/class-subjects/${id}/activate`)
+  return data
+}
+
+export async function deleteClassSubject(id: string) {
+  await apiClient.delete(`/class-subjects/${id}`)
+}

@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -30,9 +31,16 @@ import {
 } from "@/components/ui/table"
 import { ResourceDialog } from "@/components/resource-dialog"
 import { getClasses } from "@/features/classes/api"
-import { createClassSubject, getClassSubjects } from "@/features/class-subjects/api"
+import {
+  activateClassSubject,
+  createClassSubject,
+  deactivateClassSubject,
+  deleteClassSubject,
+  getClassSubjects,
+} from "@/features/class-subjects/api"
 import { getSubjects } from "@/features/subjects/api"
 import { useAsyncList } from "@/hooks/use-async-list"
+import type { ClassSubject } from "@/types/class-subject"
 
 const classSubjectSchema = z.object({
   classId: z.string().min(1, "Class is required"),
@@ -48,6 +56,55 @@ export function ClassSubjectsPage() {
     error,
     refetch,
   } = useAsyncList(getClassSubjects)
+
+  async function handleToggleActive(classSubject: ClassSubject) {
+    const action = classSubject.isActive ? "deactivate" : "activate"
+    if (
+      !confirm(
+        classSubject.isActive
+          ? `Deactivate the link between ${classSubject.className} and ${classSubject.subjectName}? No new teacher assignments, assignments, or submissions can be created for it until reactivated.`
+          : `Reactivate the link between ${classSubject.className} and ${classSubject.subjectName}?`
+      )
+    ) {
+      return
+    }
+
+    try {
+      if (classSubject.isActive) {
+        await deactivateClassSubject(classSubject.id)
+      } else {
+        await activateClassSubject(classSubject.id)
+      }
+      toast.success(`Link ${action}d.`)
+      refetch()
+    } catch (err) {
+      const message = isAxiosError(err)
+        ? (err.response?.data?.message ?? `Failed to ${action} link.`)
+        : `Failed to ${action} link.`
+      toast.error(message)
+    }
+  }
+
+  async function handleDelete(classSubject: ClassSubject) {
+    if (
+      !confirm(
+        `Delete the link between ${classSubject.className} and ${classSubject.subjectName}? This cannot be undone.`
+      )
+    ) {
+      return
+    }
+
+    try {
+      await deleteClassSubject(classSubject.id)
+      toast.success("Link deleted.")
+      refetch()
+    } catch (err) {
+      const message = isAxiosError(err)
+        ? (err.response?.data?.message ?? "Failed to delete link.")
+        : "Failed to delete link."
+      toast.error(message)
+    }
+  }
 
   return (
     <div className="grid gap-4">
@@ -74,12 +131,14 @@ export function ClassSubjectsPage() {
             <TableRow>
               <TableHead>Class</TableHead>
               <TableHead>Subject</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {classSubjects.length === 0 && (
               <TableRow>
-                <TableCell colSpan={2} className="text-muted-foreground">
+                <TableCell colSpan={4} className="text-muted-foreground">
                   No class-subject links yet.
                 </TableCell>
               </TableRow>
@@ -88,6 +147,29 @@ export function ClassSubjectsPage() {
               <TableRow key={cs.id}>
                 <TableCell>{cs.className}</TableCell>
                 <TableCell>{cs.subjectName}</TableCell>
+                <TableCell>
+                  <Badge variant={cs.isActive ? "default" : "secondary"}>
+                    {cs.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleActive(cs)}
+                    >
+                      {cs.isActive ? "Deactivate" : "Activate"}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(cs)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
