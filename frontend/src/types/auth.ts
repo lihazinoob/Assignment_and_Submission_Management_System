@@ -5,6 +5,13 @@ export interface LoginRequest {
   password: string
 }
 
+export interface RegisterRequest {
+  fullName: string
+  email: string
+  password: string
+  role: "Teacher" | "Student"
+}
+
 export interface AuthResponse {
   accessToken: string
   refreshToken: string

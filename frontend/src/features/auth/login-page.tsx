@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -92,6 +92,12 @@ export function LoginPage() {
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Signing in..." : "Sign in"}
               </Button>
+              <p className="text-muted-foreground text-center text-sm">
+                Teacher or Student?{" "}
+                <Link to="/register" className="text-primary underline underline-offset-4">
+                  Create an account
+                </Link>
+              </p>
             </form>
           </Form>
         </CardContent>

@@ -7,10 +7,3 @@ export interface User {
   role: UserRole
   isActive: boolean
 }
-
-export interface CreateUserRequest {
-  fullName: string
-  email: string
-  password: string
-  role: UserRole
-}

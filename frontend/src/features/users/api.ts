@@ -1,6 +1,6 @@
 import { apiClient } from "@/api/client"
 import type { UserRole } from "@/types/auth"
-import type { CreateUserRequest, User } from "@/types/user"
+import type { User } from "@/types/user"
 
 export async function getUsers(role?: UserRole) {
   const { data } = await apiClient.get<User[]>("/users", {
@@ -15,9 +15,4 @@ export function getTeachers() {
 
 export function getStudents() {
   return getUsers("Student")
-}
-
-export async function createUser(request: CreateUserRequest) {
-  const { data } = await apiClient.post<User>("/users", request)
-  return data
 }
