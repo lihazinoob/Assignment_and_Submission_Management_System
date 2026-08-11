@@ -62,4 +62,42 @@ public class UserService : IUserService
 
         return await query.OrderBy(u => u.FullName).ToListAsync(cancellationToken);
     }
+
+    public async Task<User> DeactivateUserAsync(
+        Guid userId,
+        Guid currentAdminId,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId == currentAdminId)
+        {
+            throw new BusinessRuleException("You cannot deactivate your own account.");
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user is null)
+        {
+            throw new BusinessRuleException("User not found.");
+        }
+
+        user.IsActive = false;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return user;
+    }
+
+    public async Task<User> ActivateUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user is null)
+        {
+            throw new BusinessRuleException("User not found.");
+        }
+
+        user.IsActive = true;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return user;
+    }
 }

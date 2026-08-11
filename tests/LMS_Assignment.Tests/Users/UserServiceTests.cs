@@ -88,4 +88,96 @@ public class UserServiceTests
 
         Assert.Equal(2, users.Count);
     }
+
+    [Fact]
+    public async Task DeactivateUserAsync_WithExistingUser_SetsIsActiveFalse()
+    {
+        var (service, context) = CreateSut();
+
+        var target = new User
+        {
+            Id = Guid.NewGuid(),
+            FullName = "Target Teacher",
+            Email = "target@lms.demo",
+            PasswordHash = "x",
+            Role = UserRole.Teacher,
+            IsActive = true
+        };
+        context.Users.Add(target);
+        await context.SaveChangesAsync();
+
+        var result = await service.DeactivateUserAsync(target.Id, Guid.NewGuid());
+
+        Assert.False(result.IsActive);
+
+        var stored = await context.Users.SingleAsync(u => u.Id == target.Id);
+        Assert.False(stored.IsActive);
+    }
+
+    [Fact]
+    public async Task DeactivateUserAsync_WithOwnAccount_ThrowsBusinessRuleException()
+    {
+        var (service, context) = CreateSut();
+
+        var admin = new User
+        {
+            Id = Guid.NewGuid(),
+            FullName = "Demo Admin",
+            Email = "admin@lms.demo",
+            PasswordHash = "x",
+            Role = UserRole.Admin,
+            IsActive = true
+        };
+        context.Users.Add(admin);
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => service.DeactivateUserAsync(admin.Id, admin.Id));
+
+        var stored = await context.Users.SingleAsync(u => u.Id == admin.Id);
+        Assert.True(stored.IsActive);
+    }
+
+    [Fact]
+    public async Task DeactivateUserAsync_WithUnknownUserId_ThrowsBusinessRuleException()
+    {
+        var (service, _) = CreateSut();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => service.DeactivateUserAsync(Guid.NewGuid(), Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task ActivateUserAsync_WithDeactivatedUser_SetsIsActiveTrue()
+    {
+        var (service, context) = CreateSut();
+
+        var target = new User
+        {
+            Id = Guid.NewGuid(),
+            FullName = "Target Teacher",
+            Email = "target@lms.demo",
+            PasswordHash = "x",
+            Role = UserRole.Teacher,
+            IsActive = false
+        };
+        context.Users.Add(target);
+        await context.SaveChangesAsync();
+
+        var result = await service.ActivateUserAsync(target.Id);
+
+        Assert.True(result.IsActive);
+
+        var stored = await context.Users.SingleAsync(u => u.Id == target.Id);
+        Assert.True(stored.IsActive);
+    }
+
+    [Fact]
+    public async Task ActivateUserAsync_WithUnknownUserId_ThrowsBusinessRuleException()
+    {
+        var (service, _) = CreateSut();
+
+        await Assert.ThrowsAsync<BusinessRuleException>(
+            () => service.ActivateUserAsync(Guid.NewGuid()));
+    }
 }

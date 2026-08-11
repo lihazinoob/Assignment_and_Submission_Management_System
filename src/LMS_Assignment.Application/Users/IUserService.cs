@@ -15,4 +15,13 @@ public interface IUserService
     Task<List<User>> GetUsersAsync(
         UserRole? role,
         CancellationToken cancellationToken = default);
+
+    Task<User> DeactivateUserAsync(
+        Guid userId,
+        Guid currentAdminId,
+        CancellationToken cancellationToken = default);
+
+    Task<User> ActivateUserAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
 }
