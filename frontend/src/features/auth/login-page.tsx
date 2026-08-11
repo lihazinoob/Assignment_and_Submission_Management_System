@@ -45,6 +45,11 @@ export function LoginPage() {
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 401) {
         setServerError("Invalid email or password.")
+      } else if (isAxiosError(error) && error.response?.status === 403) {
+        setServerError(
+          error.response.data?.message ??
+            "Your account has been disabled by the administrator."
+        )
       } else {
         setServerError("Something went wrong. Please try again.")
       }
