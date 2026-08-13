@@ -1,9 +1,17 @@
 import { apiClient } from "@/api/client"
+import type { PagedResponse } from "@/types/api"
 import type { CreateClassRequest, SchoolClass, UpdateClassRequest } from "@/types/class"
 
-export async function getClasses() {
-  const { data } = await apiClient.get<SchoolClass[]>("/classes")
+export async function getClassesPaged(page: number, pageSize: number) {
+  const { data } = await apiClient.get<PagedResponse<SchoolClass>>("/classes", {
+    params: { page, pageSize },
+  })
   return data
+}
+
+export async function getClasses() {
+  const result = await getClassesPaged(1, 100)
+  return result.items
 }
 
 export async function createClass(request: CreateClassRequest) {

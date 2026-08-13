@@ -1,13 +1,32 @@
 import { apiClient } from "@/api/client"
+import type { PagedResponse } from "@/types/api"
 import type {
   Assignment,
+  AssignmentStatus,
   CreateAssignmentRequest,
   UpdateAssignmentRequest,
 } from "@/types/assignment"
 
-export async function getAssignments() {
-  const { data } = await apiClient.get<Assignment[]>("/assignments")
+export interface AssignmentFilters {
+  status?: AssignmentStatus
+  classSubjectId?: string
+  search?: string
+}
+
+export async function getAssignmentsPaged(
+  page: number,
+  pageSize: number,
+  filters: AssignmentFilters = {}
+) {
+  const { data } = await apiClient.get<PagedResponse<Assignment>>("/assignments", {
+    params: { page, pageSize, ...filters },
+  })
   return data
+}
+
+export async function getAssignments() {
+  const result = await getAssignmentsPaged(1, 100)
+  return result.items
 }
 
 export async function getAssignment(id: string) {

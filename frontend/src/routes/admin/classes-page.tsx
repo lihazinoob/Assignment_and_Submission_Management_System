@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Pagination } from "@/components/ui/pagination"
 import {
   Table,
   TableBody,
@@ -29,11 +30,17 @@ import {
   createClass,
   deactivateClass,
   deleteClass,
-  getClasses,
+  getClassesPaged,
   updateClass,
 } from "@/features/classes/api"
-import { useAsyncList } from "@/hooks/use-async-list"
+import { usePagedList } from "@/hooks/use-paged-list"
 import type { SchoolClass } from "@/types/class"
+
+const emptyFilters = {}
+
+async function fetchClasses(page: number, pageSize: number) {
+  return getClassesPaged(page, pageSize)
+}
 
 const classSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -43,7 +50,16 @@ const classSchema = z.object({
 type ClassFormValues = z.infer<typeof classSchema>
 
 export function ClassesPage() {
-  const { data: classes, isLoading, error, refetch } = useAsyncList(getClasses)
+  const {
+    data: classes,
+    totalCount,
+    totalPages,
+    page,
+    setPage,
+    isLoading,
+    error,
+    refetch,
+  } = usePagedList(fetchClasses, emptyFilters, 10)
 
   async function handleToggleActive(schoolClass: SchoolClass) {
     const action = schoolClass.isActive ? "deactivate" : "activate"
@@ -101,6 +117,7 @@ export function ClassesPage() {
       {error && <p className="text-destructive">{error}</p>}
 
       {!isLoading && !error && (
+        <>
         <Table>
           <TableHeader>
             <TableRow>
@@ -165,6 +182,13 @@ export function ClassesPage() {
             ))}
           </TableBody>
         </Table>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+        />
+        </>
       )}
     </div>
   )

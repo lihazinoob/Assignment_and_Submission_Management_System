@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { isAxiosError } from "axios"
-import { useCallback, useState } from "react"
+import { useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Pagination } from "@/components/ui/pagination"
 import {
   Select,
   SelectContent,
@@ -34,24 +35,47 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { ResourceDialog } from "@/components/resource-dialog"
 import { getAssignments } from "@/features/assignments/api"
-import { gradeSubmission, getSubmissions } from "@/features/submissions/api"
+import { getSubmissionsPaged, gradeSubmission } from "@/features/submissions/api"
+import type { SubmissionFilters } from "@/features/submissions/api"
 import { useAsyncList } from "@/hooks/use-async-list"
+import { usePagedList } from "@/hooks/use-paged-list"
+import type { SubmissionStatus } from "@/types/submission"
 import type { Submission } from "@/types/submission"
+
+const STATUS_OPTIONS = ["all", "Submitted", "Late", "Graded"] as const
+type StatusOption = (typeof STATUS_OPTIONS)[number]
 
 export function TeacherSubmissionsPage() {
   const { data: assignments } = useAsyncList(getAssignments)
   const [assignmentId, setAssignmentId] = useState("")
+  const [status, setStatus] = useState<StatusOption>("all")
 
-  const fetchSubmissions = useCallback(
-    () => (assignmentId ? getSubmissions(assignmentId) : Promise.resolve([])),
+  const filters = useMemo<SubmissionFilters>(
+    () => ({
+      assignmentId: assignmentId || undefined,
+      status: status === "all" ? undefined : (status as SubmissionStatus),
+    }),
+    [assignmentId, status]
+  )
+
+  const fetcher = useMemo(
+    () => (page: number, pageSize: number, f: SubmissionFilters) =>
+      assignmentId
+        ? getSubmissionsPaged(page, pageSize, f)
+        : Promise.resolve({ items: [], totalCount: 0, page: 1, pageSize }),
     [assignmentId]
   )
+
   const {
     data: submissions,
+    totalCount,
+    totalPages,
+    page,
+    setPage,
     isLoading,
     error,
     refetch,
-  } = useAsyncList(fetchSubmissions)
+  } = usePagedList(fetcher, filters, 10)
 
   const selectedAssignment = assignments.find((a) => a.id === assignmentId)
 
@@ -59,31 +83,60 @@ export function TeacherSubmissionsPage() {
     <div className="grid gap-4">
       <h1 className="text-2xl font-semibold">Submissions</h1>
 
-      <div className="grid max-w-sm gap-2">
-        <label className="text-sm leading-none font-medium">
-          Assignment
-        </label>
-        <Select
-          value={assignmentId}
-          onValueChange={(value: string | null) => setAssignmentId(value ?? "")}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select an assignment">
-              {(value: string | null) => {
-                if (!value) return "Select an assignment"
-                const selected = assignments.find((a) => a.id === value)
-                return selected ? selected.title : value
-              }}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {assignments.map((a) => (
-              <SelectItem key={a.id} value={a.id}>
-                {a.title} ({a.className} · {a.subjectName})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="grid max-w-sm min-w-64 gap-2">
+          <label className="text-sm leading-none font-medium">
+            Assignment
+          </label>
+          <Select
+            value={assignmentId}
+            onValueChange={(value: string | null) => setAssignmentId(value ?? "")}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select an assignment">
+                {(value: string | null) => {
+                  if (!value) return "Select an assignment"
+                  const selected = assignments.find((a) => a.id === value)
+                  return selected ? selected.title : value
+                }}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {assignments.map((a) => (
+                <SelectItem key={a.id} value={a.id}>
+                  {a.title} ({a.className} · {a.subjectName})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {assignmentId && (
+          <div className="grid gap-2">
+            <label className="text-sm leading-none font-medium">Status</label>
+            <Select
+              value={status}
+              onValueChange={(value: string | null) =>
+                setStatus((value as StatusOption) ?? "all")
+              }
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="All statuses">
+                  {(value: string | null) =>
+                    value === "all" || !value ? "All statuses" : value
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option === "all" ? "All statuses" : option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {!assignmentId && (
@@ -98,6 +151,7 @@ export function TeacherSubmissionsPage() {
       {assignmentId && error && <p className="text-destructive">{error}</p>}
 
       {assignmentId && !isLoading && !error && (
+        <>
         <Table>
           <TableHeader>
             <TableRow>
@@ -157,6 +211,13 @@ export function TeacherSubmissionsPage() {
             ))}
           </TableBody>
         </Table>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+        />
+        </>
       )}
     </div>
   )

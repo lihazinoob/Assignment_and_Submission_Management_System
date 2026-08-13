@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Pagination } from "@/components/ui/pagination"
 import {
   Table,
   TableBody,
@@ -36,11 +37,18 @@ import {
   createClassSubject,
   deactivateClassSubject,
   deleteClassSubject,
-  getClassSubjects,
+  getClassSubjectsPaged,
 } from "@/features/class-subjects/api"
 import { getSubjects } from "@/features/subjects/api"
 import { useAsyncList } from "@/hooks/use-async-list"
+import { usePagedList } from "@/hooks/use-paged-list"
 import type { ClassSubject } from "@/types/class-subject"
+
+const emptyFilters = {}
+
+async function fetchClassSubjects(page: number, pageSize: number) {
+  return getClassSubjectsPaged(page, pageSize)
+}
 
 const classSubjectSchema = z.object({
   classId: z.string().min(1, "Class is required"),
@@ -52,10 +60,14 @@ type ClassSubjectFormValues = z.infer<typeof classSubjectSchema>
 export function ClassSubjectsPage() {
   const {
     data: classSubjects,
+    totalCount,
+    totalPages,
+    page,
+    setPage,
     isLoading,
     error,
     refetch,
-  } = useAsyncList(getClassSubjects)
+  } = usePagedList(fetchClassSubjects, emptyFilters, 10)
 
   async function handleToggleActive(classSubject: ClassSubject) {
     const action = classSubject.isActive ? "deactivate" : "activate"
@@ -126,6 +138,7 @@ export function ClassSubjectsPage() {
       {error && <p className="text-destructive">{error}</p>}
 
       {!isLoading && !error && (
+        <>
         <Table>
           <TableHeader>
             <TableRow>
@@ -174,6 +187,13 @@ export function ClassSubjectsPage() {
             ))}
           </TableBody>
         </Table>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+        />
+        </>
       )}
     </div>
   )

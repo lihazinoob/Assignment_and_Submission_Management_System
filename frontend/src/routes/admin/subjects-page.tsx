@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Pagination } from "@/components/ui/pagination"
 import {
   Table,
   TableBody,
@@ -24,8 +25,14 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { ResourceDialog } from "@/components/resource-dialog"
-import { createSubject, getSubjects } from "@/features/subjects/api"
-import { useAsyncList } from "@/hooks/use-async-list"
+import { createSubject, getSubjectsPaged } from "@/features/subjects/api"
+import { usePagedList } from "@/hooks/use-paged-list"
+
+const emptyFilters = {}
+
+async function fetchSubjects(page: number, pageSize: number) {
+  return getSubjectsPaged(page, pageSize)
+}
 
 const subjectSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -37,10 +44,14 @@ type SubjectFormValues = z.infer<typeof subjectSchema>
 export function SubjectsPage() {
   const {
     data: subjects,
+    totalCount,
+    totalPages,
+    page,
+    setPage,
     isLoading,
     error,
     refetch,
-  } = useAsyncList(getSubjects)
+  } = usePagedList(fetchSubjects, emptyFilters, 10)
 
   return (
     <div className="grid gap-4">
@@ -62,6 +73,7 @@ export function SubjectsPage() {
       {error && <p className="text-destructive">{error}</p>}
 
       {!isLoading && !error && (
+        <>
         <Table>
           <TableHeader>
             <TableRow>
@@ -91,6 +103,13 @@ export function SubjectsPage() {
             ))}
           </TableBody>
         </Table>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+        />
+        </>
       )}
     </div>
   )

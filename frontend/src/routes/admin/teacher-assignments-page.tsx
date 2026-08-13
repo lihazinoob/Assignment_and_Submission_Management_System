@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Pagination } from "@/components/ui/pagination"
 import {
   Table,
   TableBody,
@@ -32,10 +33,17 @@ import { ResourceDialog } from "@/components/resource-dialog"
 import { getClassSubjects } from "@/features/class-subjects/api"
 import {
   createTeacherSubjectAssignment,
-  getTeacherSubjectAssignments,
+  getTeacherSubjectAssignmentsPaged,
 } from "@/features/teacher-subject-assignments/api"
 import { getTeachers } from "@/features/users/api"
 import { useAsyncList } from "@/hooks/use-async-list"
+import { usePagedList } from "@/hooks/use-paged-list"
+
+const emptyFilters = {}
+
+async function fetchTeacherAssignments(page: number, pageSize: number) {
+  return getTeacherSubjectAssignmentsPaged(page, pageSize)
+}
 
 const assignmentSchema = z.object({
   teacherId: z.string().min(1, "Teacher is required"),
@@ -47,10 +55,14 @@ type AssignmentFormValues = z.infer<typeof assignmentSchema>
 export function TeacherAssignmentsPage() {
   const {
     data: assignments,
+    totalCount,
+    totalPages,
+    page,
+    setPage,
     isLoading,
     error,
     refetch,
-  } = useAsyncList(getTeacherSubjectAssignments)
+  } = usePagedList(fetchTeacherAssignments, emptyFilters, 10)
 
   return (
     <div className="grid gap-4">
@@ -72,6 +84,7 @@ export function TeacherAssignmentsPage() {
       {error && <p className="text-destructive">{error}</p>}
 
       {!isLoading && !error && (
+        <>
         <Table>
           <TableHeader>
             <TableRow>
@@ -97,6 +110,13 @@ export function TeacherAssignmentsPage() {
             ))}
           </TableBody>
         </Table>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+        />
+        </>
       )}
     </div>
   )

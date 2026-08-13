@@ -1,16 +1,32 @@
 import { apiClient } from "@/api/client"
+import type { PagedResponse } from "@/types/api"
 import type {
   CreateSubmissionRequest,
   GradeSubmissionRequest,
   Submission,
+  SubmissionStatus,
   UpdateSubmissionRequest,
 } from "@/types/submission"
 
-export async function getSubmissions(assignmentId?: string) {
-  const { data } = await apiClient.get<Submission[]>("/submissions", {
-    params: assignmentId ? { assignmentId } : undefined,
+export interface SubmissionFilters {
+  assignmentId?: string
+  status?: SubmissionStatus
+}
+
+export async function getSubmissionsPaged(
+  page: number,
+  pageSize: number,
+  filters: SubmissionFilters = {}
+) {
+  const { data } = await apiClient.get<PagedResponse<Submission>>("/submissions", {
+    params: { page, pageSize, ...filters },
   })
   return data
+}
+
+export async function getSubmissions(assignmentId?: string) {
+  const result = await getSubmissionsPaged(1, 100, { assignmentId })
+  return result.items
 }
 
 export async function getSubmission(id: string) {
