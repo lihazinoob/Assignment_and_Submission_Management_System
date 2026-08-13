@@ -26,11 +26,16 @@ builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 const string FrontendCorsPolicy = "FrontendCorsPolicy";
+var allowedOriginsSetting = builder.Configuration["AllowedOrigins"];
+var allowedOrigins = string.IsNullOrWhiteSpace(allowedOriginsSetting)
+    ? ["http://localhost:5173"]
+    : allowedOriginsSetting.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
