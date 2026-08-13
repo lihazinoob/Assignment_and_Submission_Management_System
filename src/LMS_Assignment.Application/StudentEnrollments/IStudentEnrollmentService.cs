@@ -1,3 +1,4 @@
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Domain.Entities;
 
 namespace LMS_Assignment.Application.StudentEnrollments;
@@ -10,5 +11,5 @@ public interface IStudentEnrollmentService
         string? rollNumber,
         CancellationToken cancellationToken = default);
 
-    Task<List<StudentEnrollment>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<PagedResult<StudentEnrollment>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default);
 }

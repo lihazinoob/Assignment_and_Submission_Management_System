@@ -1,5 +1,7 @@
 using LMS_Assignment.Application.Common.Exceptions;
+using LMS_Assignment.Application.Common.Extensions;
 using LMS_Assignment.Application.Common.Interfaces;
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -75,9 +77,10 @@ public class TeacherSubjectAssignmentService : ITeacherSubjectAssignmentService
         return assignment;
     }
 
-    public async Task<List<TeacherSubjectAssignment>> GetForCurrentUserAsync(
+    public async Task<PagedResult<TeacherSubjectAssignment>> GetForCurrentUserAsync(
         Guid userId,
         UserRole role,
+        PaginationQuery pagination,
         CancellationToken cancellationToken = default)
     {
         var query = _context.TeacherSubjectAssignments
@@ -91,6 +94,8 @@ public class TeacherSubjectAssignmentService : ITeacherSubjectAssignmentService
             query = query.Where(t => t.TeacherId == userId);
         }
 
-        return await query.OrderBy(t => t.AssignedAt).ToListAsync(cancellationToken);
+        query = query.OrderBy(t => t.AssignedAt);
+
+        return await query.ToPagedResultAsync(pagination.Page, pagination.PageSize, cancellationToken);
     }
 }

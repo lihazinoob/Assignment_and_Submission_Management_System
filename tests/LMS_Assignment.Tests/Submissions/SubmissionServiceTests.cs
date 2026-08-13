@@ -352,7 +352,7 @@ public class SubmissionServiceTests
         var teacher = await SeedUserAsync(context, UserRole.Teacher);
 
         await Assert.ThrowsAsync<BusinessRuleException>(
-            () => sut.GetForCurrentUserAsync(teacher.Id, UserRole.Teacher, null));
+            () => sut.GetForCurrentUserAsync(teacher.Id, UserRole.Teacher, new SubmissionFilter()));
     }
 
     [Fact]
@@ -377,9 +377,51 @@ public class SubmissionServiceTests
         await sut.SubmitAsync(assignment.Id, "Mine", student.Id);
         await sut.SubmitAsync(assignment.Id, "Theirs", otherStudent.Id);
 
-        var result = await sut.GetForCurrentUserAsync(student.Id, UserRole.Student, null);
+        var result = await sut.GetForCurrentUserAsync(student.Id, UserRole.Student, new SubmissionFilter());
 
-        var single = Assert.Single(result);
+        var single = Assert.Single(result.Items);
         Assert.Equal(student.Id, single.StudentId);
+    }
+
+    [Fact]
+    public async Task GetForCurrentUserAsync_WithPaging_ReturnsRequestedPageAndTotalCount()
+    {
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var student = await SeedUserAsync(context, UserRole.Student);
+        var assignmentOne = await SeedPublishedAssignmentAsync(context, teacher, student);
+        var assignmentTwo = await SeedPublishedAssignmentAsync(context, teacher, student);
+        var assignmentThree = await SeedPublishedAssignmentAsync(context, teacher, student);
+
+        await sut.SubmitAsync(assignmentOne.Id, "One", student.Id);
+        await sut.SubmitAsync(assignmentTwo.Id, "Two", student.Id);
+        await sut.SubmitAsync(assignmentThree.Id, "Three", student.Id);
+
+        var result = await sut.GetForCurrentUserAsync(
+            student.Id, UserRole.Student, new SubmissionFilter { Page = 2, PageSize = 2 });
+
+        Assert.Single(result.Items);
+        Assert.Equal(3, result.TotalCount);
+        Assert.Equal(2, result.Page);
+        Assert.Equal(2, result.PageSize);
+    }
+
+    [Fact]
+    public async Task GetForCurrentUserAsync_WithStatusFilter_ReturnsOnlyMatchingStatus()
+    {
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var student = await SeedUserAsync(context, UserRole.Student);
+        var assignment = await SeedPublishedAssignmentAsync(context, teacher, student);
+        var submission = await sut.SubmitAsync(assignment.Id, "Answer", student.Id);
+        await sut.GradeSubmissionAsync(submission.Id, 80, "Good work", teacher.Id);
+
+        var result = await sut.GetForCurrentUserAsync(
+            student.Id, UserRole.Student, new SubmissionFilter { Status = SubmissionStatus.Graded });
+
+        var single = Assert.Single(result.Items);
+        Assert.Equal(submission.Id, single.Id);
     }
 }

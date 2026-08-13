@@ -1,3 +1,4 @@
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 
@@ -15,8 +16,9 @@ public interface ITeacherSubjectAssignmentService
     /// Admin sees every assignment; a Teacher sees only their own — a Teacher token has no
     /// other way to discover the teacherSubjectAssignmentId needed to create an Assignment.
     /// </summary>
-    Task<List<TeacherSubjectAssignment>> GetForCurrentUserAsync(
+    Task<PagedResult<TeacherSubjectAssignment>> GetForCurrentUserAsync(
         Guid userId,
         UserRole role,
+        PaginationQuery pagination,
         CancellationToken cancellationToken = default);
 }

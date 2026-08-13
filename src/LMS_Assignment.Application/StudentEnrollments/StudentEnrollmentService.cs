@@ -1,5 +1,7 @@
 using LMS_Assignment.Application.Common.Exceptions;
+using LMS_Assignment.Application.Common.Extensions;
 using LMS_Assignment.Application.Common.Interfaces;
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -65,12 +67,13 @@ public class StudentEnrollmentService : IStudentEnrollmentService
         return enrollment;
     }
 
-    public async Task<List<StudentEnrollment>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<StudentEnrollment>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
-        return await _context.StudentEnrollments
+        var query = _context.StudentEnrollments
             .Include(e => e.Student)
             .Include(e => e.Class)
-            .OrderBy(e => e.EnrolledAt)
-            .ToListAsync(cancellationToken);
+            .OrderBy(e => e.EnrolledAt);
+
+        return await query.ToPagedResultAsync(pagination.Page, pagination.PageSize, cancellationToken);
     }
 }

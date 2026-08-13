@@ -68,10 +68,10 @@ public class UserServiceTests
             new User { Id = Guid.NewGuid(), FullName = "Some Student", Email = "student@lms.demo", PasswordHash = "x", Role = UserRole.Student, IsActive = true });
         await context.SaveChangesAsync();
 
-        var teachers = await service.GetUsersAsync(UserRole.Teacher);
+        var teachers = await service.GetUsersAsync(new UserFilter { Role = UserRole.Teacher });
 
-        Assert.Equal(2, teachers.Count);
-        Assert.Equal(["Amy Teacher", "Zed Teacher"], teachers.Select(u => u.FullName));
+        Assert.Equal(2, teachers.TotalCount);
+        Assert.Equal(["Amy Teacher", "Zed Teacher"], teachers.Items.Select(u => u.FullName));
     }
 
     [Fact]
@@ -84,9 +84,59 @@ public class UserServiceTests
             new User { Id = Guid.NewGuid(), FullName = "B Student", Email = "b@lms.demo", PasswordHash = "x", Role = UserRole.Student, IsActive = true });
         await context.SaveChangesAsync();
 
-        var users = await service.GetUsersAsync(null);
+        var users = await service.GetUsersAsync(new UserFilter());
 
-        Assert.Equal(2, users.Count);
+        Assert.Equal(2, users.TotalCount);
+    }
+
+    [Fact]
+    public async Task GetUsersAsync_WithPaging_ReturnsRequestedPageAndTotalCount()
+    {
+        var (service, context) = CreateSut();
+
+        context.Users.AddRange(
+            new User { Id = Guid.NewGuid(), FullName = "A User", Email = "a@lms.demo", PasswordHash = "x", Role = UserRole.Student, IsActive = true },
+            new User { Id = Guid.NewGuid(), FullName = "B User", Email = "b@lms.demo", PasswordHash = "x", Role = UserRole.Student, IsActive = true },
+            new User { Id = Guid.NewGuid(), FullName = "C User", Email = "c@lms.demo", PasswordHash = "x", Role = UserRole.Student, IsActive = true });
+        await context.SaveChangesAsync();
+
+        var result = await service.GetUsersAsync(new UserFilter { Page = 2, PageSize = 2 });
+
+        Assert.Single(result.Items);
+        Assert.Equal("C User", result.Items[0].FullName);
+        Assert.Equal(3, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task GetUsersAsync_WithIsActiveFilter_ReturnsOnlyMatching()
+    {
+        var (service, context) = CreateSut();
+
+        context.Users.AddRange(
+            new User { Id = Guid.NewGuid(), FullName = "Active User", Email = "active@lms.demo", PasswordHash = "x", Role = UserRole.Student, IsActive = true },
+            new User { Id = Guid.NewGuid(), FullName = "Inactive User", Email = "inactive@lms.demo", PasswordHash = "x", Role = UserRole.Student, IsActive = false });
+        await context.SaveChangesAsync();
+
+        var result = await service.GetUsersAsync(new UserFilter { IsActive = false });
+
+        var single = Assert.Single(result.Items);
+        Assert.Equal("Inactive User", single.FullName);
+    }
+
+    [Fact]
+    public async Task GetUsersAsync_WithSearchFilter_MatchesNameOrEmail()
+    {
+        var (service, context) = CreateSut();
+
+        context.Users.AddRange(
+            new User { Id = Guid.NewGuid(), FullName = "Jamie Rivera", Email = "jamie@lms.demo", PasswordHash = "x", Role = UserRole.Student, IsActive = true },
+            new User { Id = Guid.NewGuid(), FullName = "Someone Else", Email = "someone@lms.demo", PasswordHash = "x", Role = UserRole.Student, IsActive = true });
+        await context.SaveChangesAsync();
+
+        var result = await service.GetUsersAsync(new UserFilter { Search = "jamie" });
+
+        var single = Assert.Single(result.Items);
+        Assert.Equal("Jamie Rivera", single.FullName);
     }
 
     [Fact]

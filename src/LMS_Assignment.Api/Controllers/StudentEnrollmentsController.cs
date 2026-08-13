@@ -1,4 +1,5 @@
 using LMS_Assignment.Api.Controllers.Dtos;
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Application.StudentEnrollments;
 using LMS_Assignment.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -19,11 +20,14 @@ public class StudentEnrollmentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<StudentEnrollmentResponse>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResponse<StudentEnrollmentResponse>>> GetAll(
+        [FromQuery] int page,
+        [FromQuery] int pageSize,
+        CancellationToken cancellationToken)
     {
-        var enrollments = await _enrollmentService.GetAllAsync(cancellationToken);
+        var result = await _enrollmentService.GetAllAsync(new PaginationQuery { Page = page, PageSize = pageSize }, cancellationToken);
 
-        var response = enrollments
+        var items = result.Items
             .Select(e => new StudentEnrollmentResponse(
                 e.Id,
                 e.StudentId,
@@ -35,7 +39,7 @@ public class StudentEnrollmentsController : ControllerBase
                 e.EnrolledAt))
             .ToList();
 
-        return Ok(response);
+        return Ok(new PagedResponse<StudentEnrollmentResponse>(items, result.TotalCount, result.Page, result.PageSize));
     }
 
     [HttpPost]

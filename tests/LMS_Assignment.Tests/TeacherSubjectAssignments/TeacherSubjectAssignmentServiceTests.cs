@@ -1,4 +1,5 @@
 using LMS_Assignment.Application.Common.Exceptions;
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Application.TeacherSubjectAssignments;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
@@ -147,9 +148,9 @@ public class TeacherSubjectAssignmentServiceTests
         await service.AssignTeacherAsync(teacherA.Id, classSubject.Id, null);
         await service.AssignTeacherAsync(teacherB.Id, classSubject.Id, null);
 
-        var result = await service.GetForCurrentUserAsync(Guid.NewGuid(), UserRole.Admin);
+        var result = await service.GetForCurrentUserAsync(Guid.NewGuid(), UserRole.Admin, new PaginationQuery());
 
-        Assert.Equal(2, result.Count);
+        Assert.Equal(2, result.Items.Count);
     }
 
     [Fact]
@@ -163,9 +164,29 @@ public class TeacherSubjectAssignmentServiceTests
         await service.AssignTeacherAsync(teacherA.Id, classSubject.Id, null);
         await service.AssignTeacherAsync(teacherB.Id, classSubject.Id, null);
 
-        var result = await service.GetForCurrentUserAsync(teacherA.Id, UserRole.Teacher);
+        var result = await service.GetForCurrentUserAsync(teacherA.Id, UserRole.Teacher, new PaginationQuery());
 
-        Assert.Single(result);
-        Assert.Equal(teacherA.Id, result[0].TeacherId);
+        Assert.Single(result.Items);
+        Assert.Equal(teacherA.Id, result.Items[0].TeacherId);
+    }
+
+    [Fact]
+    public async Task GetForCurrentUserAsync_WithPaging_ReturnsRequestedPageAndTotalCount()
+    {
+        var (service, context) = CreateSut();
+        var teacherA = await SeedUserAsync(context, UserRole.Teacher);
+        var teacherB = await SeedUserAsync(context, UserRole.Teacher);
+        var teacherC = await SeedUserAsync(context, UserRole.Teacher);
+        var classSubject = await SeedClassSubjectAsync(context);
+
+        await service.AssignTeacherAsync(teacherA.Id, classSubject.Id, null);
+        await service.AssignTeacherAsync(teacherB.Id, classSubject.Id, null);
+        await service.AssignTeacherAsync(teacherC.Id, classSubject.Id, null);
+
+        var result = await service.GetForCurrentUserAsync(
+            Guid.NewGuid(), UserRole.Admin, new PaginationQuery { Page = 2, PageSize = 2 });
+
+        Assert.Single(result.Items);
+        Assert.Equal(3, result.TotalCount);
     }
 }

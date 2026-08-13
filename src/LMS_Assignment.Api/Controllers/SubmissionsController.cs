@@ -22,15 +22,32 @@ public class SubmissionsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<SubmissionResponse>>> GetAll([FromQuery] Guid? assignmentId, CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResponse<SubmissionResponse>>> GetAll(
+        [FromQuery] Guid? assignmentId,
+        [FromQuery] SubmissionStatus? status,
+        [FromQuery] int page,
+        [FromQuery] int pageSize,
+        CancellationToken cancellationToken)
     {
-        var submissions = await _submissionService.GetForCurrentUserAsync(
+        var filter = new SubmissionFilter
+        {
+            AssignmentId = assignmentId,
+            Status = status,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        var result = await _submissionService.GetForCurrentUserAsync(
             _currentUserService.UserId!.Value,
             _currentUserService.Role!.Value,
-            assignmentId,
+            filter,
             cancellationToken);
 
-        return Ok(submissions.Select(ToResponse).ToList());
+        return Ok(new PagedResponse<SubmissionResponse>(
+            result.Items.Select(ToResponse).ToList(),
+            result.TotalCount,
+            result.Page,
+            result.PageSize));
     }
 
     [HttpGet("{id:guid}")]

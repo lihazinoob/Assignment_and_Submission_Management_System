@@ -22,14 +22,34 @@ public class AssignmentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<AssignmentResponse>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResponse<AssignmentResponse>>> GetAll(
+        [FromQuery] int page,
+        [FromQuery] int pageSize,
+        [FromQuery] AssignmentStatus? status,
+        [FromQuery] Guid? classSubjectId,
+        [FromQuery] string? search,
+        CancellationToken cancellationToken)
     {
-        var assignments = await _assignmentService.GetForCurrentUserAsync(
+        var filter = new AssignmentFilter
+        {
+            Page = page,
+            PageSize = pageSize,
+            Status = status,
+            ClassSubjectId = classSubjectId,
+            Search = search
+        };
+
+        var result = await _assignmentService.GetForCurrentUserAsync(
             _currentUserService.UserId!.Value,
             _currentUserService.Role!.Value,
+            filter,
             cancellationToken);
 
-        return Ok(assignments.Select(ToResponse).ToList());
+        return Ok(new PagedResponse<AssignmentResponse>(
+            result.Items.Select(ToResponse).ToList(),
+            result.TotalCount,
+            result.Page,
+            result.PageSize));
     }
 
     [HttpGet("{id:guid}")]

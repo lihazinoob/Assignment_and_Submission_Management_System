@@ -1,5 +1,6 @@
 using LMS_Assignment.Api.Controllers.Dtos;
 using LMS_Assignment.Application.ClassSubjects;
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -19,13 +20,16 @@ public class ClassSubjectsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<ClassSubjectResponse>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResponse<ClassSubjectResponse>>> GetAll(
+        [FromQuery] int page,
+        [FromQuery] int pageSize,
+        CancellationToken cancellationToken)
     {
-        var classSubjects = await _classSubjectService.GetAllAsync(cancellationToken);
+        var result = await _classSubjectService.GetAllAsync(new PaginationQuery { Page = page, PageSize = pageSize }, cancellationToken);
 
-        var response = classSubjects.Select(ToResponse).ToList();
+        var items = result.Items.Select(ToResponse).ToList();
 
-        return Ok(response);
+        return Ok(new PagedResponse<ClassSubjectResponse>(items, result.TotalCount, result.Page, result.PageSize));
     }
 
     [Authorize(Roles = nameof(UserRole.Admin))]

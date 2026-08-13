@@ -1,5 +1,7 @@
 using LMS_Assignment.Application.Common.Exceptions;
+using LMS_Assignment.Application.Common.Extensions;
 using LMS_Assignment.Application.Common.Interfaces;
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,11 +42,11 @@ public class ClassService : IClassService
         return @class;
     }
 
-    public async Task<List<Class>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Class>> GetAllAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
-        return await _context.Classes
-            .OrderBy(c => c.Name)
-            .ToListAsync(cancellationToken);
+        var query = _context.Classes.OrderBy(c => c.Name);
+
+        return await query.ToPagedResultAsync(pagination.Page, pagination.PageSize, cancellationToken);
     }
 
     public async Task<Class> UpdateAsync(

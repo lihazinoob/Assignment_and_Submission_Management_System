@@ -1,4 +1,5 @@
 using LMS_Assignment.Application.Common.Exceptions;
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Application.Subjects;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,5 +39,20 @@ public class SubjectServiceTests
 
         await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.CreateAsync("Math Advanced", "MATH101"));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithPaging_ReturnsRequestedPageAndTotalCount()
+    {
+        var (service, _) = CreateSut();
+
+        await service.CreateAsync("Mathematics", "MATH101");
+        await service.CreateAsync("Physics", "PHY101");
+        await service.CreateAsync("Chemistry", "CHEM101");
+
+        var result = await service.GetAllAsync(new PaginationQuery { Page = 2, PageSize = 2 });
+
+        Assert.Single(result.Items);
+        Assert.Equal(3, result.TotalCount);
     }
 }

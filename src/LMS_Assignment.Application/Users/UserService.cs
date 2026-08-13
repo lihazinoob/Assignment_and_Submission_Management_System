@@ -1,5 +1,7 @@
 using LMS_Assignment.Application.Common.Exceptions;
+using LMS_Assignment.Application.Common.Extensions;
 using LMS_Assignment.Application.Common.Interfaces;
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -50,17 +52,31 @@ public class UserService : IUserService
         return user;
     }
 
-    public async Task<List<User>> GetUsersAsync(UserRole? role, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<User>> GetUsersAsync(UserFilter filter, CancellationToken cancellationToken = default)
     {
         var query = _context.Users.AsQueryable();
 
-        if (role.HasValue)
+        if (filter.Role.HasValue)
         {
-            var requestedRole = role.Value;
+            var requestedRole = filter.Role.Value;
             query = query.Where(u => u.Role == requestedRole);
         }
 
-        return await query.OrderBy(u => u.FullName).ToListAsync(cancellationToken);
+        if (filter.IsActive.HasValue)
+        {
+            var isActiveFilter = filter.IsActive.Value;
+            query = query.Where(u => u.IsActive == isActiveFilter);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var searchTerm = filter.Search.Trim().ToLower();
+            query = query.Where(u => u.FullName.ToLower().Contains(searchTerm) || u.Email.ToLower().Contains(searchTerm));
+        }
+
+        query = query.OrderBy(u => u.FullName);
+
+        return await query.ToPagedResultAsync(filter.Page, filter.PageSize, cancellationToken);
     }
 
     public async Task<User> DeactivateUserAsync(

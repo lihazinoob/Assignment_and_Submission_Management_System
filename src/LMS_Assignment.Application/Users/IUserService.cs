@@ -1,3 +1,4 @@
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 
@@ -12,8 +13,8 @@ public interface IUserService
         UserRole role,
         CancellationToken cancellationToken = default);
 
-    Task<List<User>> GetUsersAsync(
-        UserRole? role,
+    Task<PagedResult<User>> GetUsersAsync(
+        UserFilter filter,
         CancellationToken cancellationToken = default);
 
     Task<User> DeactivateUserAsync(

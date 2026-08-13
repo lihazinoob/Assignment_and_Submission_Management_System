@@ -311,11 +311,82 @@ public class AssignmentServiceTests
         });
         await context.SaveChangesAsync();
 
-        var result = await sut.GetForCurrentUserAsync(student.Id, UserRole.Student);
+        var result = await sut.GetForCurrentUserAsync(student.Id, UserRole.Student, new AssignmentFilter());
 
-        var resultId = Assert.Single(result).Id;
+        var resultId = Assert.Single(result.Items).Id;
         Assert.Equal(publishedAssignment.Id, resultId);
-        Assert.DoesNotContain(result, a => a.Id == draftAssignment.Id);
+        Assert.DoesNotContain(result.Items, a => a.Id == draftAssignment.Id);
+    }
+
+    [Fact]
+    public async Task GetForCurrentUserAsync_WithPaging_ReturnsRequestedPageAndTotalCount()
+    {
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
+
+        for (var i = 0; i < 5; i++)
+        {
+            await SeedAssignmentAsync(context, tsa);
+        }
+
+        var result = await sut.GetForCurrentUserAsync(
+            teacher.Id, UserRole.Teacher, new AssignmentFilter { Page = 2, PageSize = 2 });
+
+        Assert.Equal(2, result.Items.Count);
+        Assert.Equal(5, result.TotalCount);
+        Assert.Equal(2, result.Page);
+        Assert.Equal(2, result.PageSize);
+    }
+
+    [Fact]
+    public async Task GetForCurrentUserAsync_WithStatusFilter_ReturnsOnlyMatchingStatus()
+    {
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
+        var draftAssignment = await SeedAssignmentAsync(context, tsa, AssignmentStatus.Draft);
+        await SeedAssignmentAsync(context, tsa, AssignmentStatus.Published);
+
+        var result = await sut.GetForCurrentUserAsync(
+            teacher.Id, UserRole.Teacher, new AssignmentFilter { Status = AssignmentStatus.Draft });
+
+        var single = Assert.Single(result.Items);
+        Assert.Equal(draftAssignment.Id, single.Id);
+    }
+
+    [Fact]
+    public async Task GetForCurrentUserAsync_WithSearchFilter_ReturnsOnlyMatchingTitle()
+    {
+        var context = TestApplicationDbContext.CreateNew();
+        var sut = CreateSut(context);
+        var teacher = await SeedUserAsync(context, UserRole.Teacher);
+        var tsa = await SeedTeacherSubjectAssignmentAsync(context, teacher);
+        context.Assignments.Add(new Assignment
+        {
+            Id = Guid.NewGuid(),
+            TeacherSubjectAssignmentId = tsa.Id,
+            Title = "Algebra Basics",
+            Deadline = DateTime.UtcNow.AddDays(7),
+            MaxMarks = 100
+        });
+        context.Assignments.Add(new Assignment
+        {
+            Id = Guid.NewGuid(),
+            TeacherSubjectAssignmentId = tsa.Id,
+            Title = "Geometry Intro",
+            Deadline = DateTime.UtcNow.AddDays(7),
+            MaxMarks = 100
+        });
+        await context.SaveChangesAsync();
+
+        var result = await sut.GetForCurrentUserAsync(
+            teacher.Id, UserRole.Teacher, new AssignmentFilter { Search = "algebra" });
+
+        var single = Assert.Single(result.Items);
+        Assert.Equal("Algebra Basics", single.Title);
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using LMS_Assignment.Application.Common.Exceptions;
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Application.StudentEnrollments;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
@@ -112,5 +113,24 @@ public class StudentEnrollmentServiceTests
 
         await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.EnrollAsync(student.Id, @class.Id, null));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithPaging_ReturnsRequestedPageAndTotalCount()
+    {
+        var (service, context) = CreateSut();
+        var @class = await SeedClassAsync(context);
+        var studentA = await SeedUserAsync(context, UserRole.Student);
+        var studentB = await SeedUserAsync(context, UserRole.Student);
+        var studentC = await SeedUserAsync(context, UserRole.Student);
+
+        await service.EnrollAsync(studentA.Id, @class.Id, null);
+        await service.EnrollAsync(studentB.Id, @class.Id, null);
+        await service.EnrollAsync(studentC.Id, @class.Id, null);
+
+        var result = await service.GetAllAsync(new PaginationQuery { Page = 2, PageSize = 2 });
+
+        Assert.Single(result.Items);
+        Assert.Equal(3, result.TotalCount);
     }
 }

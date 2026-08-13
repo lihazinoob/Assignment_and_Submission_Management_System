@@ -1,5 +1,7 @@
 using LMS_Assignment.Application.Common.Exceptions;
+using LMS_Assignment.Application.Common.Extensions;
 using LMS_Assignment.Application.Common.Interfaces;
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -162,7 +164,7 @@ public class AssignmentService : IAssignmentService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<List<Assignment>> GetForCurrentUserAsync(Guid userId, UserRole role, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Assignment>> GetForCurrentUserAsync(Guid userId, UserRole role, AssignmentFilter filter, CancellationToken cancellationToken = default)
     {
         var query = _context.Assignments
             .Include(a => a.TeacherSubjectAssignment).ThenInclude(t => t.Teacher)
@@ -173,13 +175,11 @@ public class AssignmentService : IAssignmentService
         switch (role)
         {
             case UserRole.Admin:
-                return await query.OrderByDescending(a => a.CreatedAt).ToListAsync(cancellationToken);
+                break;
 
             case UserRole.Teacher:
-                return await query
-                    .Where(a => a.TeacherSubjectAssignment.TeacherId == userId)
-                    .OrderByDescending(a => a.CreatedAt)
-                    .ToListAsync(cancellationToken);
+                query = query.Where(a => a.TeacherSubjectAssignment.TeacherId == userId);
+                break;
 
             case UserRole.Student:
                 // EF/Npgsql inlines enum literals used directly in a predicate as lowercase SQL text
@@ -194,15 +194,35 @@ public class AssignmentService : IAssignmentService
                     .Select(e => e.ClassId)
                     .ToListAsync(cancellationToken);
 
-                return await query
-                    .Where(a => a.Status == publishedStatus
-                        && enrolledClassIds.Contains(a.TeacherSubjectAssignment.ClassSubject.ClassId))
-                    .OrderByDescending(a => a.CreatedAt)
-                    .ToListAsync(cancellationToken);
+                query = query.Where(a => a.Status == publishedStatus
+                    && enrolledClassIds.Contains(a.TeacherSubjectAssignment.ClassSubject.ClassId));
+                break;
 
             default:
-                return new List<Assignment>();
+                return new PagedResult<Assignment> { Items = new List<Assignment>(), TotalCount = 0, Page = filter.Page, PageSize = filter.PageSize };
         }
+
+        if (filter.Status.HasValue)
+        {
+            var statusFilter = filter.Status.Value;
+            query = query.Where(a => a.Status == statusFilter);
+        }
+
+        if (filter.ClassSubjectId.HasValue)
+        {
+            var classSubjectIdFilter = filter.ClassSubjectId.Value;
+            query = query.Where(a => a.TeacherSubjectAssignment.ClassSubjectId == classSubjectIdFilter);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var searchTerm = filter.Search.Trim().ToLower();
+            query = query.Where(a => a.Title.ToLower().Contains(searchTerm));
+        }
+
+        query = query.OrderByDescending(a => a.CreatedAt);
+
+        return await query.ToPagedResultAsync(filter.Page, filter.PageSize, cancellationToken);
     }
 
     public async Task<Assignment> GetByIdAsync(Guid assignmentId, Guid userId, UserRole role, CancellationToken cancellationToken = default)

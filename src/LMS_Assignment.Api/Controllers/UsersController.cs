@@ -23,11 +23,30 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<UserResponse>>> GetAll([FromQuery] UserRole? role, CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResponse<UserResponse>>> GetAll(
+        [FromQuery] UserRole? role,
+        [FromQuery] bool? isActive,
+        [FromQuery] string? search,
+        [FromQuery] int page,
+        [FromQuery] int pageSize,
+        CancellationToken cancellationToken)
     {
-        var users = await _userService.GetUsersAsync(role, cancellationToken);
+        var filter = new UserFilter
+        {
+            Role = role,
+            IsActive = isActive,
+            Search = search,
+            Page = page,
+            PageSize = pageSize
+        };
 
-        return Ok(users.Select(ToResponse).ToList());
+        var result = await _userService.GetUsersAsync(filter, cancellationToken);
+
+        return Ok(new PagedResponse<UserResponse>(
+            result.Items.Select(ToResponse).ToList(),
+            result.TotalCount,
+            result.Page,
+            result.PageSize));
     }
 
     [HttpPost("{id:guid}/deactivate")]

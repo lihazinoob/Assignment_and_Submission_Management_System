@@ -1,5 +1,6 @@
 using LMS_Assignment.Application.ClassSubjects;
 using LMS_Assignment.Application.Common.Exceptions;
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -157,5 +158,22 @@ public class ClassSubjectServiceTests
 
         await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.DeleteAsync(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithPaging_ReturnsRequestedPageAndTotalCount()
+    {
+        var (service, context) = CreateSut();
+
+        for (var i = 0; i < 3; i++)
+        {
+            var (@class, subject) = await SeedClassAndSubjectAsync(context);
+            await service.CreateAsync(@class.Id, subject.Id);
+        }
+
+        var result = await service.GetAllAsync(new PaginationQuery { Page = 2, PageSize = 2 });
+
+        Assert.Single(result.Items);
+        Assert.Equal(3, result.TotalCount);
     }
 }

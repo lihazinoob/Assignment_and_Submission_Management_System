@@ -1,5 +1,7 @@
 using LMS_Assignment.Application.Common.Exceptions;
+using LMS_Assignment.Application.Common.Extensions;
 using LMS_Assignment.Application.Common.Interfaces;
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -179,12 +181,14 @@ public class SubmissionService : ISubmissionService
         return submission;
     }
 
-    public async Task<List<Submission>> GetForCurrentUserAsync(
+    public async Task<PagedResult<Submission>> GetForCurrentUserAsync(
         Guid userId,
         UserRole role,
-        Guid? assignmentId,
+        SubmissionFilter filter,
         CancellationToken cancellationToken = default)
     {
+        var assignmentId = filter.AssignmentId;
+
         var query = _context.Submissions
             .Include(s => s.Student)
             .Include(s => s.Assignment)
@@ -198,7 +202,7 @@ public class SubmissionService : ISubmissionService
                     query = query.Where(s => s.AssignmentId == assignmentId.Value);
                 }
 
-                return await query.OrderByDescending(s => s.SubmittedAt).ToListAsync(cancellationToken);
+                break;
 
             case UserRole.Teacher:
                 if (!assignmentId.HasValue)
@@ -220,10 +224,8 @@ public class SubmissionService : ISubmissionService
                     throw new ForbiddenAccessException("You can only view submissions for your own assignments.");
                 }
 
-                return await query
-                    .Where(s => s.AssignmentId == assignmentId.Value)
-                    .OrderByDescending(s => s.SubmittedAt)
-                    .ToListAsync(cancellationToken);
+                query = query.Where(s => s.AssignmentId == assignmentId.Value);
+                break;
 
             case UserRole.Student:
                 query = query.Where(s => s.StudentId == userId);
@@ -232,11 +234,21 @@ public class SubmissionService : ISubmissionService
                     query = query.Where(s => s.AssignmentId == assignmentId.Value);
                 }
 
-                return await query.OrderByDescending(s => s.SubmittedAt).ToListAsync(cancellationToken);
+                break;
 
             default:
-                return new List<Submission>();
+                return new PagedResult<Submission> { Items = new List<Submission>(), TotalCount = 0, Page = filter.Page, PageSize = filter.PageSize };
         }
+
+        if (filter.Status.HasValue)
+        {
+            var statusFilter = filter.Status.Value;
+            query = query.Where(s => s.Status == statusFilter);
+        }
+
+        query = query.OrderByDescending(s => s.SubmittedAt);
+
+        return await query.ToPagedResultAsync(filter.Page, filter.PageSize, cancellationToken);
     }
 
     public async Task<Submission> GetByIdAsync(Guid submissionId, Guid userId, UserRole role, CancellationToken cancellationToken = default)

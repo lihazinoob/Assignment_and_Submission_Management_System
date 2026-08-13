@@ -1,3 +1,4 @@
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 
@@ -29,7 +30,7 @@ public interface IAssignmentService
 
     Task DeleteAsync(Guid assignmentId, Guid teacherId, CancellationToken cancellationToken = default);
 
-    Task<List<Assignment>> GetForCurrentUserAsync(Guid userId, UserRole role, CancellationToken cancellationToken = default);
+    Task<PagedResult<Assignment>> GetForCurrentUserAsync(Guid userId, UserRole role, AssignmentFilter filter, CancellationToken cancellationToken = default);
 
     Task<Assignment> GetByIdAsync(Guid assignmentId, Guid userId, UserRole role, CancellationToken cancellationToken = default);
 }

@@ -1,3 +1,4 @@
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Domain.Entities;
 using LMS_Assignment.Domain.Enums;
 
@@ -24,10 +25,10 @@ public interface ISubmissionService
         Guid teacherId,
         CancellationToken cancellationToken = default);
 
-    Task<List<Submission>> GetForCurrentUserAsync(
+    Task<PagedResult<Submission>> GetForCurrentUserAsync(
         Guid userId,
         UserRole role,
-        Guid? assignmentId,
+        SubmissionFilter filter,
         CancellationToken cancellationToken = default);
 
     Task<Submission> GetByIdAsync(Guid submissionId, Guid userId, UserRole role, CancellationToken cancellationToken = default);

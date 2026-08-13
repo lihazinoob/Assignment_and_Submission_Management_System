@@ -1,5 +1,6 @@
 using LMS_Assignment.Api.Controllers.Dtos;
 using LMS_Assignment.Application.Common.Interfaces;
+using LMS_Assignment.Application.Common.Models;
 using LMS_Assignment.Application.TeacherSubjectAssignments;
 using LMS_Assignment.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -24,14 +25,18 @@ public class TeacherSubjectAssignmentsController : ControllerBase
 
     [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Teacher)}")]
     [HttpGet]
-    public async Task<ActionResult<List<TeacherSubjectAssignmentResponse>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResponse<TeacherSubjectAssignmentResponse>>> GetAll(
+        [FromQuery] int page,
+        [FromQuery] int pageSize,
+        CancellationToken cancellationToken)
     {
-        var assignments = await _assignmentService.GetForCurrentUserAsync(
+        var result = await _assignmentService.GetForCurrentUserAsync(
             _currentUserService.UserId!.Value,
             _currentUserService.Role!.Value,
+            new PaginationQuery { Page = page, PageSize = pageSize },
             cancellationToken);
 
-        var response = assignments
+        var items = result.Items
             .Select(a => new TeacherSubjectAssignmentResponse(
                 a.Id,
                 a.TeacherId,
@@ -43,7 +48,7 @@ public class TeacherSubjectAssignmentsController : ControllerBase
                 a.AssignedAt))
             .ToList();
 
-        return Ok(response);
+        return Ok(new PagedResponse<TeacherSubjectAssignmentResponse>(items, result.TotalCount, result.Page, result.PageSize));
     }
 
     [Authorize(Roles = nameof(UserRole.Admin))]
